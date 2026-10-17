@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Skorly",
+    "slug": "skorly",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.skorly.mobile"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      "expo-sqlite",
+      "@react-native-community/datetimepicker",
+      "expo-sharing"
+    ]
+  }
+}

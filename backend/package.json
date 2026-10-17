@@ -1,0 +1,10 @@
+{
+  "name": "pixel-peepers-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "bcryptjs": "2.4.3",
+    "express": "4.19.2",
+    "pg": "8.12.0"
+  }
+}

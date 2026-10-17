@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-export let BASE_URL = 'http://10.0.2.2:8080';
+export let BASE_URL = 'http://192.168.137.1:8080';
 const key = 'skorly.server';
 export async function loadServerAddress() {
   BASE_URL = (await SecureStore.getItemAsync(key)) || BASE_URL;

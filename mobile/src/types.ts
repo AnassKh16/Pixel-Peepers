@@ -1,0 +1,10 @@
+export type Match = { id: string; home: string; away: string; homeScore: number; awayScore: number; status: 'Live' | 'Upcoming' | 'Completed'; startsAt: string; minute: number; sport: string; venue: string; version: number; updatedAt: string; events: ScoreEvent[] };
+export type ScoreEvent = { id: string; team: string; minute: number; description: string; points: number; compensates?: string };
+export type Standing = { team: string; played: number; won: number; drawn: number; lost: number; diff: number; points: number; status: 'Clinched' | 'Eliminated' | 'Still possible' };
+export type Product = { id: string; name: string; price: number; description: string; sizes: string[]; colors: string[]; symbol: string };
+export type CartItem = { product: Product; size: string; color: string; quantity: number };
+export type Order = { id: string; createdAt: string; items: CartItem[]; subtotal: number; discount: number; shipping: number; total: number; status: 'Paid' | 'Declined' | 'Capture failed'; discountCode: string };
+export type Player = { id: string; name: string; number: number; position: string; role: 'Captain' | 'Starter' | 'Substitute' };
+export type Club = { id: string; name: string; venue: string; social: string; version: number; roster: Player[]; staff: string[]; history: string[] };
+export type QueueItem = { action_id: string; type: 'score_event' | 'roster_transfer'; queued_at: string; base_version: number; payload: Record<string, unknown> };
+export type SyncResult = { action_id: string; status: 'Applied' | 'Rejected'; reason: string };

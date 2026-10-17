@@ -1,0 +1,10 @@
+node_modules/
+.npm-cache/
+.tmp/
+.expo/
+.verify-android/
+mobile-audit.json
+android/
+release/
+tests/
+.git/

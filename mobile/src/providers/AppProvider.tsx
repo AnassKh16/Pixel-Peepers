@@ -1,0 +1,76 @@
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import NetInfo from '@react-native-community/netinfo';
+import * as Crypto from 'expo-crypto';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { Button } from '../components/Button';
+import { colors } from '../theme';
+import { Session, syncAction } from '../services/api';
+import { CartItem, QueueItem, SyncResult } from '../types';
+import { readCache, writeCache } from '../storage/database';
+import { BASE_URL } from '../config';
+
+type State = { session: Session; online: boolean; syncing: boolean; pending: QueueItem[]; results: SyncResult[];
+  revision: number; toast: string; notify: (message: string) => void; sync: () => Promise<void>;
+  enqueue: (type: QueueItem['type'], version: number, payload: QueueItem['payload']) => Promise<void>;
+  cart: CartItem[]; setCart: (items: CartItem[]) => Promise<void> };
+const Context = createContext<State | null>(null);
+export function useApp() { const value = useContext(Context); if (!value) throw new Error('App provider missing'); return value; }
+export function AppProvider({ session, children }: React.PropsWithChildren<{ session: Session }>) {
+  const [online, setOnline] = useState(false); const [syncing, setSyncing] = useState(false);
+  const [pending, setPending] = useState<QueueItem[]>([]); const [results, setResults] = useState<SyncResult[]>([]);
+  const [cart, updateCart] = useState<CartItem[]>([]); const [revision, setRevision] = useState(0);
+  const [toast, notify] = useState(''); const [ready, setReady] = useState(false);
+  const [storageError, setStorageError] = useState(false); const [retry, setRetry] = useState(0);
+  const working = useRef(false); const pendingRef = useRef<QueueItem[]>([]);
+  const store = `${BASE_URL}:${session.email}`;
+  const chain = useRef(Promise.resolve());
+  function serialize(task: () => Promise<void>) {
+    const next = chain.current.then(task); chain.current = next.catch(() => {}); return next;
+  }
+  useEffect(() => {
+    setReady(false); setStorageError(false);
+    let active = true;
+    Promise.all([readCache<QueueItem[]>(`${store}:queue`), readCache<CartItem[]>(`${store}:cart`), readCache<SyncResult[]>(`${store}:results`)])
+      .then(([queue, savedCart, savedResults]) => { if (active) { pendingRef.current = queue || []; setPending(queue || []); updateCart(savedCart || []); setResults(savedResults || []); setReady(true); } })
+      .catch(() => { if (active) setStorageError(true); });
+    // LAN APIs can be reachable even when the hotspot has no internet uplink.
+    const unsubscribe = NetInfo.addEventListener(state => setOnline(state.isConnected === true));
+    return () => { active = false; unsubscribe(); };
+  }, [store, retry]);
+  useEffect(() => { if (!toast) return; const timer = setTimeout(() => notify(''), 4000); return () => clearTimeout(timer); }, [toast]);
+  async function sync() {
+    if (!online || !ready || working.current) return;
+    working.current = true; setSyncing(true);
+    try {
+      await serialize(async () => {
+        const history: SyncResult[] = [];
+        for (const item of [...pendingRef.current]) {
+          const result = await syncAction(item, session.role);
+          history.push(result);
+          // Persist results before removal so interrupted runs remain reviewable.
+          await writeCache(`${store}:results`, history);
+          const remaining = pendingRef.current.filter(action => action.action_id !== item.action_id);
+          await writeCache(`${store}:queue`, remaining); pendingRef.current = remaining; setPending(remaining); setResults([...history]);
+        }
+        if (history.length) { setRevision(value => value + 1); notify('Sync finished. Review each action in Sync Status.'); }
+      });
+    } catch { notify('Sync could not finish. Pending actions are saved. Try again.'); }
+    finally { working.current = false; setSyncing(false); }
+  }
+  useEffect(() => { if (online && ready && pending.length) void sync(); }, [online, ready, pending.length]);
+  async function enqueue(type: QueueItem['type'], version: number, payload: QueueItem['payload']) {
+    if (!ready) throw new Error('Your saved actions are still loading. Please try again shortly.');
+    if ((type === 'score_event' && session.role !== 'League Organizer') || (type === 'roster_transfer' && session.role !== 'Club Manager')) throw new Error('Your account cannot perform this action.');
+    await serialize(async () => {
+      const item: QueueItem = { action_id: Crypto.randomUUID(), type, queued_at: new Date().toISOString(), base_version: version, payload };
+      const next = [...pendingRef.current, item];
+      await writeCache(`${store}:queue`, next); pendingRef.current = next; setPending(next);
+    });
+    notify(online ? 'Action saved. Syncing now.' : 'Action saved as Pending. It will sync when you reconnect.');
+  }
+  async function setCart(items: CartItem[]) {
+    await writeCache(`${store}:cart`, items); updateCart(items);
+  }
+  if (!ready) return <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 20, backgroundColor: colors.cream }}>{storageError ? <><Text style={{ color: colors.forest, fontSize: 16 }}>Could not load saved actions. Please try again.</Text><Button title="Retry" onPress={() => setRetry(value => value + 1)} /></> : <ActivityIndicator accessibilityLabel="Loading saved actions" color={colors.forest} />}</View>;
+  return <Context.Provider value={{ session, online, syncing, pending, results, revision, toast, notify, sync, enqueue, cart, setCart }}>{children}</Context.Provider>;
+}

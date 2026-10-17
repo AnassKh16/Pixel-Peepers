@@ -5,13 +5,14 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { colors } from '../theme';
 
-export function SettingsScreen() {
+export function SettingsScreen({ locked = false, onSaved, onLogout }: { locked?: boolean; onSaved?: () => void; onLogout?: () => void }) {
   const [address, setAddress] = useState(BASE_URL);
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   async function save() {
+    if (locked) { setMessage('Sync your pending actions before changing servers.'); return; }
     setSaving(true); setMessage('');
-    try { await saveServerAddress(address); setMessage('✓ Server address saved.'); }
+    try { await saveServerAddress(address); setMessage('✓ Server address saved.'); onSaved?.(); }
     catch (e) { setMessage(e instanceof Error ? e.message : 'Could not save the server address. Try again.'); }
     finally { setSaving(false); }
   }
@@ -21,9 +22,11 @@ export function SettingsScreen() {
     <Text style={s.label}>Server address</Text>
     <Input accessibilityLabel="Server address" value={address} onChangeText={setAddress}
       autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+    {locked && <Text style={s.body}>Sync your pending actions before changing servers.</Text>}
     <Button title="Save address" onPress={save} busy={saving} />
     {!!message && <Text accessibilityLiveRegion="polite" style={s.body}>{message}</Text>}
     <Text style={s.body}>Demo preview uses local mock data. The server address will be used when the REST API is connected.</Text>
+    {onLogout && <Button title="Sign out" onPress={onLogout} />}
   </ScrollView>;
 }
 const s = StyleSheet.create({

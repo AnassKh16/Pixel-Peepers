@@ -44,7 +44,10 @@ export async function syncActions(pool,sign,actor,body,{legacy=false}={}) {
         }
       }
       result.server_version=await version(prior?.action??action,db);
-      if(!prior)await client.query('INSERT INTO offline_sync VALUES ($1,$2,$3)',[device,action.action_id,{action,result}]);
+      // Invalid signed payloads may also be unsafe to JSON.stringify for storage.
+      // Retain only the affected resource ids needed for duplicate version reads.
+      const savedAction=details?.code==='VALIDATION_ERROR'?{type:action.type,payload:Object.fromEntries(['match_id','league_id','player_id'].map(key=>[key,typeof action.payload[key]==='string'?action.payload[key]:null]))}:action;
+      if(!prior)await client.query('INSERT INTO offline_sync VALUES ($1,$2,$3)',[device,action.action_id,{action:savedAction,result}]);
       results.set(action.action_id,{result,details});processed_order.push(action.action_id);
     }finally{try{await client.query('SELECT pg_advisory_unlock_all()');}finally{client.release();}}
   }

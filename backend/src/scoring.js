@@ -11,6 +11,13 @@ export function validateEvent(body) {
   if (!isObject(body.payload)) fields.push('payload');
   else {
     const payload = body.payload;
+    // Reject payloads that cannot be represented by the signature contract before
+    // any database lookup (non-finite numbers or excessive nesting).
+    try { canonical(payload); }
+    catch (error) {
+      if (error instanceof TypeError || error instanceof RangeError) fields.push('payload');
+      else throw error;
+    }
     if (body.type === 'match_init') {
       for (const key of ['sport_id','home_team_id','away_team_id']) if (!validId(payload[key])) fields.push(`payload.${key}`);
       if (validId(payload.home_team_id) && payload.home_team_id === payload.away_team_id) fields.push('payload.away_team_id');

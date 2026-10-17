@@ -1,0 +1,1341 @@
+{
+  "base_url": "http://localhost:8080",
+  "checked_at": "2026-10-17T09:13:06.206Z",
+  "checks": 173,
+  "mismatches": [],
+  "records": [
+    {
+      "label": "5.4 health",
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.5 reset",
+      "method": "POST",
+      "path": "/audit/v1/reset",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "Appendix C second reset",
+      "method": "POST",
+      "path": "/audit/v1/reset",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "Appendix C all tables + audit sequence identical after two resets",
+      "issues": []
+    },
+    {
+      "label": "5.6 sport creation",
+      "method": "POST",
+      "path": "/audit/v1/sports",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.6 duplicate sport",
+      "method": "POST",
+      "path": "/audit/v1/sports",
+      "status": 409,
+      "expected_status": 409,
+      "issues": []
+    },
+    {
+      "label": "5.7A round robin",
+      "method": "POST",
+      "path": "/audit/v1/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.7B Swiss",
+      "method": "POST",
+      "path": "/audit/v1/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.7C single elimination",
+      "method": "POST",
+      "path": "/audit/v1/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.7D double elimination",
+      "method": "POST",
+      "path": "/audit/v1/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.8 league registration",
+      "method": "POST",
+      "path": "/audit/v1/leagues",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 match_init",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 match_start",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 score",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 score",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 score",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 discipline",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 discipline",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 discipline",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 match_end",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 score projection",
+      "method": "GET",
+      "path": "/audit/v1/score/m-score",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.9 replay",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.9 cricket match_init",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 cricket match_start",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 cricket score",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 cricket nullable fields",
+      "method": "GET",
+      "path": "/audit/v1/score/m-model-cricket",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.9 esports match_init",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 esports match_start",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 esports score",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 esports nullable fields",
+      "method": "GET",
+      "path": "/audit/v1/score/m-model-esports",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.9 tie/compensation match_init",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 tie/compensation match_start",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 tie/compensation tiebreak_winner",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 tie/compensation match_end",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 tie/compensation compensation",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.9 completed compensation projection",
+      "method": "GET",
+      "path": "/audit/v1/score/m-tie",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.10 standings",
+      "method": "GET",
+      "path": "/audit/v1/standings/lg-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.11 roster setup",
+      "method": "POST",
+      "path": "/audit/v1/roster/setup",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.11 deferred transfer",
+      "method": "POST",
+      "path": "/audit/v1/roster/transfer",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.11 transfer replay",
+      "method": "POST",
+      "path": "/audit/v1/roster/transfer",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.11 history",
+      "method": "GET",
+      "path": "/audit/v1/roster/history/p2?as_of=2027-01-05",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.11 setup replaces state",
+      "method": "POST",
+      "path": "/audit/v1/roster/setup",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.11 loan",
+      "method": "POST",
+      "path": "/audit/v1/roster/transfer",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.11 automatic return",
+      "method": "GET",
+      "path": "/audit/v1/roster/history/p2?as_of=2027-01-05",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.12 checkout",
+      "method": "POST",
+      "path": "/audit/v1/checkout",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.12 inventory",
+      "method": "GET",
+      "path": "/audit/v1/inventory/var-jersey-001-M",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 token matrix",
+      "method": "POST",
+      "path": "/audit/v1/rbac-matrix",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P1 super_admin",
+      "method": "POST",
+      "path": "/audit/v1/rbac/tenants",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P1 club_manager",
+      "method": "POST",
+      "path": "/audit/v1/rbac/tenants",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P1 league_organizer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/tenants",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P1 player",
+      "method": "POST",
+      "path": "/audit/v1/rbac/tenants",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P1 viewer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/tenants",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P2 super_admin",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-1/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P2 club_manager",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-1/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P2 league_organizer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-1/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P2 player",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-1/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P2 viewer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-1/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P3 super_admin",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/roster",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P3 club_manager",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/roster",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P3 league_organizer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P3 player",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P3 viewer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P4 super_admin",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/products",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P4 club_manager",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/products",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P4 league_organizer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P4 player",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P4 viewer",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P5 super_admin",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P5 club_manager",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P5 league_organizer",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P5 player",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P5 viewer",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P6 super_admin",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P6 club_manager",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P6 league_organizer",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P6 player",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P6 viewer",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P7 super_admin",
+      "method": "GET",
+      "path": "/audit/v1/rbac/platform/config",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 P7 club_manager",
+      "method": "GET",
+      "path": "/audit/v1/rbac/platform/config",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P7 league_organizer",
+      "method": "GET",
+      "path": "/audit/v1/rbac/platform/config",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P7 player",
+      "method": "GET",
+      "path": "/audit/v1/rbac/platform/config",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 P7 viewer",
+      "method": "GET",
+      "path": "/audit/v1/rbac/platform/config",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin league-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-2/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager league-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-2/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer league-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-2/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player league-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-2/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer league-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-2/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin league-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-beta-1/fixtures",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager league-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-beta-1/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer league-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-beta-1/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player league-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-beta-1/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer league-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-beta-1/fixtures",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/roster",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/products",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer club-alpha-2 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin club-alpha-2 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager club-alpha-2 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer club-alpha-2 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 player club-alpha-2 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer club-alpha-2 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-alpha-2",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/roster",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/roster",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/products",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer club-beta-1 POST",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-beta-1/products",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin club-beta-1 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-beta-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager club-beta-1 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer club-beta-1 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player club-beta-1 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer club-beta-1 GET",
+      "method": "GET",
+      "path": "/audit/v1/rbac/clubs/club-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin player-alpha-2 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-2",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager player-alpha-2 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-2",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer player-alpha-2 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-2",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player player-alpha-2 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-2",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer player-alpha-2 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-2",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 super_admin player-beta-1 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-beta-1",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.13 club_manager player-beta-1 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 league_organizer player-beta-1 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 player player-beta-1 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 viewer player-beta-1 PATCH",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-beta-1",
+      "status": 403,
+      "expected_status": 403,
+      "issues": []
+    },
+    {
+      "label": "5.13 token lifetime and algorithm super_admin",
+      "issues": []
+    },
+    {
+      "label": "5.13 token lifetime and algorithm club_manager",
+      "issues": []
+    },
+    {
+      "label": "5.13 token lifetime and algorithm league_organizer",
+      "issues": []
+    },
+    {
+      "label": "5.13 token lifetime and algorithm player",
+      "issues": []
+    },
+    {
+      "label": "5.13 token lifetime and algorithm viewer",
+      "issues": []
+    },
+    {
+      "label": "Appendix C alg:none",
+      "method": "GET",
+      "path": "/audit/v1/rbac/platform/config",
+      "status": 401,
+      "expected_status": 401,
+      "issues": []
+    },
+    {
+      "label": "5.14 reset roster scenario",
+      "method": "POST",
+      "path": "/audit/v1/roster/setup",
+      "status": 201,
+      "expected_status": 201,
+      "issues": []
+    },
+    {
+      "label": "5.14 offline sync",
+      "method": "POST",
+      "path": "/audit/v1/offline-sync",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.14 full replay",
+      "method": "POST",
+      "path": "/audit/v1/offline-sync",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "Error order sports schema before duplicate",
+      "method": "POST",
+      "path": "/audit/v1/sports",
+      "status": 400,
+      "expected_status": 400,
+      "issues": []
+    },
+    {
+      "label": "Error order checkout schema before variant",
+      "method": "POST",
+      "path": "/audit/v1/checkout",
+      "status": 400,
+      "expected_status": 400,
+      "issues": []
+    },
+    {
+      "label": "Error order checkout variant before discount",
+      "method": "POST",
+      "path": "/audit/v1/checkout",
+      "status": 404,
+      "expected_status": 404,
+      "issues": []
+    },
+    {
+      "label": "Error order checkout discount before stock",
+      "method": "POST",
+      "path": "/audit/v1/checkout",
+      "status": 400,
+      "expected_status": 400,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized reset",
+      "method": "POST",
+      "path": "/audit/v1/reset",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized sports",
+      "method": "POST",
+      "path": "/audit/v1/sports",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized fixtures",
+      "method": "POST",
+      "path": "/audit/v1/fixtures",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized leagues",
+      "method": "POST",
+      "path": "/audit/v1/leagues",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized events",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized roster/setup",
+      "method": "POST",
+      "path": "/audit/v1/roster/setup",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized roster/transfer",
+      "method": "POST",
+      "path": "/audit/v1/roster/transfer",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized checkout",
+      "method": "POST",
+      "path": "/audit/v1/checkout",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized rbac-matrix",
+      "method": "POST",
+      "path": "/audit/v1/rbac-matrix",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized offline-sync",
+      "method": "POST",
+      "path": "/audit/v1/offline-sync",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized authorized P1",
+      "method": "POST",
+      "path": "/audit/v1/rbac/tenants",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized authorized P2",
+      "method": "POST",
+      "path": "/audit/v1/rbac/leagues/league-alpha-1/fixtures",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized authorized P3",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/roster",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized authorized P4",
+      "method": "POST",
+      "path": "/audit/v1/rbac/clubs/club-alpha-1/products",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C oversized authorized P5",
+      "method": "PATCH",
+      "path": "/audit/v1/rbac/players/player-alpha-1",
+      "status": 413,
+      "expected_status": 413,
+      "issues": []
+    },
+    {
+      "label": "Appendix C hostile sport id",
+      "method": "POST",
+      "path": "/audit/v1/sports",
+      "status": 400,
+      "expected_status": 400,
+      "issues": []
+    },
+    {
+      "label": "Appendix C hostile customer preserved as plain data",
+      "issues": []
+    },
+    {
+      "label": "Hostile non-finite payload",
+      "method": "POST",
+      "path": "/audit/v1/events",
+      "status": 400,
+      "expected_status": 400,
+      "issues": []
+    },
+    {
+      "label": "Hostile deep payload never 5xx",
+      "status": 400,
+      "issues": []
+    },
+    {
+      "label": "Hostile non-finite offline payload",
+      "method": "POST",
+      "path": "/audit/v1/offline-sync",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "Hostile deep offline payload",
+      "method": "POST",
+      "path": "/audit/v1/offline-sync",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "5.3 event and receipt signatures using runtime environment salt",
+      "issues": []
+    },
+    {
+      "label": "5.12 PDF text contains order id and PKR 4500.00",
+      "issues": []
+    },
+    {
+      "label": "5.13 ping",
+      "method": "GET",
+      "path": "/api/v1/ping",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    },
+    {
+      "label": "Appendix C 150-request rolling rate limit",
+      "issues": []
+    },
+    {
+      "label": "Appendix C burst finishes within five seconds",
+      "issues": []
+    },
+    {
+      "label": "Appendix C audit namespace not rate limited",
+      "issues": []
+    },
+    {
+      "label": "Appendix C rate recovery after 11 seconds",
+      "method": "GET",
+      "path": "/api/v1/ping",
+      "status": 200,
+      "expected_status": 200,
+      "issues": []
+    }
+  ]
+}

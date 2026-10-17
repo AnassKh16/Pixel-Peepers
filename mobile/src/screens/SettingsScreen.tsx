@@ -4,6 +4,7 @@ import { BASE_URL, saveServerAddress } from '../config';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { colors } from '../theme';
+import { friendlyError } from '../services/errors';
 
 export function SettingsScreen({ locked = false, onSaved, onLogout }: { locked?: boolean; onSaved?: () => void; onLogout?: () => void }) {
   const [address, setAddress] = useState(BASE_URL);
@@ -13,7 +14,7 @@ export function SettingsScreen({ locked = false, onSaved, onLogout }: { locked?:
     if (locked) { setMessage('Sync your pending actions before changing servers.'); return; }
     setSaving(true); setMessage('');
     try { await saveServerAddress(address); setMessage('✓ Server address saved.'); onSaved?.(); }
-    catch (e) { setMessage(e instanceof Error ? e.message : 'Could not save the server address. Try again.'); }
+    catch (e) { setMessage(friendlyError(e, 'Could not save the server address. Try again.')); }
     finally { setSaving(false); }
   }
   return <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
@@ -23,7 +24,7 @@ export function SettingsScreen({ locked = false, onSaved, onLogout }: { locked?:
     <Input accessibilityLabel="Server address" value={address} onChangeText={setAddress}
       autoCapitalize="none" autoCorrect={false} keyboardType="url" />
     {locked && <Text style={s.body}>Sync your pending actions before changing servers.</Text>}
-    <Button title="Save address" onPress={save} busy={saving} />
+    <Button title="Save address" onPress={save} busy={saving} disabled={locked} />
     {!!message && <Text accessibilityLiveRegion="polite" style={s.body}>{message}</Text>}
     <Text style={s.body}>The app connects to this server. If it cannot be reached, saved content is labelled Offline - cached. Sign out and sign in again after changing servers.</Text>
     {onLogout && <Button title="Sign out" onPress={onLogout} />}

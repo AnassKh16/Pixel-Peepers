@@ -4,6 +4,7 @@ import * as Crypto from 'expo-crypto';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import { Button } from '../components/Button';
 import { colors } from '../theme';
+import { friendlyError } from '../services/errors';
 import { Session, syncActions, subscribeApiStatus } from '../services/api';
 import { CartItem, QueueItem, SyncResult } from '../types';
 import { readCache, writeCache, writeCacheBatch } from '../storage/database';
@@ -22,7 +23,7 @@ export function AppProvider({ session, children }: React.PropsWithChildren<{ ses
   useEffect(() => subscribeApiStatus(setCached), []);
   const [pending, setPending] = useState<QueueItem[]>([]); const [results, setResults] = useState<SyncResult[]>([]);
   const [cart, updateCart] = useState<CartItem[]>([]); const [revision, setRevision] = useState(0);
-  const [toast, notify] = useState(''); const [ready, setReady] = useState(false);
+  const [toast, notify] = useState('Welcome back.'); const [ready, setReady] = useState(false);
   const [storageError, setStorageError] = useState(false); const [retry, setRetry] = useState(0);
   const working = useRef(false); const pendingRef = useRef<QueueItem[]>([]);
   const store = `${BASE_URL}:${session.email}`;
@@ -56,9 +57,9 @@ export function AppProvider({ session, children }: React.PropsWithChildren<{ ses
           pendingRef.current = remaining; setPending(remaining); setResults([...history]);
           setRevision(value => value + 1);
         }
-        if (history.length) { setRevision(value => value + 1); notify('Sync finished. Review each action in Sync Status.'); }
+        if (history.length) { setRevision(value => value + 1); notify(`Sync finished: ${history.filter(item => item.status === 'Applied').length} applied, ${history.filter(item => item.status === 'Rejected').length} rejected. Review Sync Status for details.`); }
       });
-    } catch (error) { notify(`${error instanceof Error ? error.message : 'Sync could not finish.'} Pending actions are saved.`); }
+    } catch (error) { notify(`${friendlyError(error, 'Sync could not finish.')} Pending actions are saved.`); }
     finally { working.current = false; setSyncing(false); }
   }
   useEffect(() => { if (online && ready && pending.length) void sync(); }, [online, ready, pending.length, networkRevision]);
@@ -68,7 +69,7 @@ export function AppProvider({ session, children }: React.PropsWithChildren<{ ses
     await serialize(async () => {
       const id = Crypto.randomUUID();
       const stablePayload = type === 'score_event' ? { ...payload, event_id: payload.event_id || `event-${id}` } : { ...payload, request_id: payload.request_id || `roster-${id}` };
-      const item: QueueItem = { action_id: id, type, queued_at: new Date().toISOString(), base_version: version, payload: stablePayload };
+      const item: QueueItem = { action_id: id, type, queued_at: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'), base_version: version, payload: stablePayload };
       const next = [...pendingRef.current, item];
       await writeCache(`${store}:queue`, next); pendingRef.current = next; setPending(next);
     });

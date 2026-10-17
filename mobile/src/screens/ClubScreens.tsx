@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Modal, ScrollView, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Badge, Body, Card, Chip, Empty, Page, Resource, Title, ui, useResource } from '../components/UI';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { Sheet } from '../components/Sheet';
+import { friendlyError } from '../services/errors';
 import { useApp } from '../providers/AppProvider';
 import { getClub, getFixtures, getMatch, getSport } from '../services/api';
 import { Routes } from '../navigation/types';
@@ -14,8 +16,8 @@ import { colors } from '../theme';
 export function ClubScreen({ navigation }: { navigation: Pick<NativeStackNavigationProp<Routes>, 'navigate'> }) {
   const { online, revision, session, pending } = useApp(); const [tab, setTab] = useState('Roster');
   const resource = useResource(() => getClub(online), [online, revision]); const club = resource.data;
-  return <Page><Resource resource={resource}>{club && <>
-    <Card dark><Text accessibilityLabel="Alpha United club crest" style={{ color: colors.coral, fontFamily: 'Sora_800ExtraBold', fontSize: 48 }}>AU</Text>
+  return <Page onRefresh={resource.reload} refreshing={resource.loading}><Resource resource={resource}>{club && <>
+    <Card dark><Text accessibilityLabel={`${club.name} club crest`} style={{ color: colors.coral, fontFamily: 'Sora_800ExtraBold', fontSize: 48 }}>{club.name.split(' ').map(word => word[0]).slice(0, 2).join('')}</Text>
       <Text style={[ui.title, { color: colors.cream }]}>{club.name}</Text><Text style={[ui.body, { color: colors.cream }]}>{club.venue}{'\n'}{club.social}</Text></Card>
     {(!online || club.cached) && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
     <View style={ui.row}>{['Roster', 'Staff', 'History'].map(label => <Chip key={label} label={label} active={tab === label} onPress={() => setTab(label)} />)}</View>
@@ -26,7 +28,7 @@ export function ClubScreen({ navigation }: { navigation: Pick<NativeStackNavigat
     {tab === 'History' && (club.history.length ? club.history.map((event, index) => <Card key={index}><Body>{event}</Body></Card>) : <Empty message="Your club’s story is just beginning." />)}
   </>}</Resource></Page>;
 }
-export function RosterScreen() {
+export function RosterScreen({ navigation }: NativeStackScreenProps<Routes, 'Roster'>) {
   const { online, revision, session, enqueue, pending } = useApp();
   const resource = useResource(() => getClub(online), [online, revision]);
   const [player, setPlayer] = useState<Player>(); const [operation, setOperation] = useState('Transfer'); const [destination, setDestination] = useState('squad-alpha-2');
@@ -42,7 +44,7 @@ export function RosterScreen() {
         to_squad_id: operation === 'Release' ? null : destination.trim(), effective_date: date(start), reason: 'Club manager roster update',
         ...(operation === 'Loan' ? { loan_end_date: date(end) } : {}) }); setPlayer(undefined);
     }
-    catch (e) { Alert.alert('Could not save action', e instanceof Error ? e.message : 'Please try again.'); }
+    catch (e) { Alert.alert('Could not save action', friendlyError(e, 'Could not save your roster change. Please try again.')); }
     finally { setBusy(false); }
   }
   function confirm() {
@@ -52,22 +54,23 @@ export function RosterScreen() {
     Alert.alert(`${operation} ${player.name}?`, operation === 'Release' ? 'This removes the player from your squad when applied.' : `Move this player to ${destination}${operation === 'Loan' ? ` until ${end.toLocaleDateString()}` : ''}? The server will check squad rules.`,
       [{ text: 'Cancel', style: 'cancel' }, { text: `Confirm ${operation.toLowerCase()}`, style: 'destructive', onPress: () => void submit() }]);
   }
-  return <Page><Title>Build your next chapter.</Title><Body>Changes stay Pending until the server applies them. The server checks transfer windows, capacity, and squad rules.</Body>
+  return <Page onRefresh={resource.reload} refreshing={resource.loading}><Title>Build your next chapter.</Title><Body>Changes stay Pending until the server applies them. The server checks transfer windows, capacity, and squad rules.</Body>
     {resource.data?.cached && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
+    {pending.some(item => item.type === 'roster_transfer') && <Button title="Review pending roster changes" onPress={() => navigation.navigate('SyncStatus')} />}
     <Resource resource={resource}>{!resource.data?.roster.length && <Empty message="There are no players to manage." />}{resource.data?.roster.map(item => <Card key={item.id}><Body strong>{item.name}</Body><Badge label={item.role} icon="person-outline" />
       {pending.some(action => action.payload.player_id === item.id) ? <Badge label="Pending roster change" icon="time-outline" /> : <Button title={`Actions for ${item.name}`} onPress={() => { setPlayer(item); setOperation('Transfer'); }} />}</Card>)}</Resource>
-    <Modal visible={!!player} transparent animationType="slide" onRequestClose={() => { if (!busy) setPlayer(undefined); }}>
-      <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#16261FCC', padding: 16 }}><ScrollView contentContainerStyle={[ui.card, { backgroundColor: colors.cream, paddingBottom: 32 }]}>
-        <Title>{player?.name}</Title><View style={ui.row}>{['Transfer', 'Loan', 'Release'].map(label => <Chip key={label} label={label} active={operation === label} onPress={() => setOperation(label)} />)}</View>
-        {operation !== 'Release' && <><Body strong>Destination squad</Body><Input accessibilityLabel="Destination squad ID" value={destination} onChangeText={setDestination} autoCapitalize="none" autoCorrect={false} /><Body>Demo destination: squad-alpha-2 (club-alpha-2).</Body></>}
+    <Button title="Back to club" onPress={() => navigation.popTo('Home', { screen: 'Club' })} />
+    <Sheet visible={!!player} busy={busy} onClose={() => setPlayer(undefined)}>
+        <Title>{player?.name}</Title><View style={ui.row}>{['Transfer', 'Loan', 'Release'].map(label => <Chip key={label} label={label} active={operation === label} disabled={busy} onPress={() => setOperation(label)} />)}</View>
+        {operation !== 'Release' && <><Body strong>Destination squad</Body><Input accessibilityLabel="Destination squad ID" editable={!busy} value={destination} onChangeText={setDestination} autoCapitalize="none" autoCorrect={false} /><Body>Demo destination: squad-alpha-2 (club-alpha-2).</Body></>}
         {operation === 'Loan' && <><Button title={`Start · ${start.toLocaleDateString()}`} onPress={() => setPicker('start')} /><Button title={`End · ${end.toLocaleDateString()}`} onPress={() => setPicker('end')} />
           {picker && <DateTimePicker value={picker === 'start' ? start : end} mode="date" minimumDate={picker === 'end' ? start : new Date()} onChange={(_, date) => { if (date) (picker === 'start' ? setStart : setEnd)(date); setPicker(undefined); }} />}</>}
-        <Button title={`Review ${operation.toLowerCase()}`} onPress={confirm} busy={busy} /><Button title="Cancel" onPress={() => setPlayer(undefined)} busy={busy} />
-      </ScrollView></View>
-    </Modal>
+        <Body>You’ll confirm this change before it is queued.</Body>
+        <Button title={`Review ${operation.toLowerCase()}`} onPress={confirm} busy={busy} /><Button title="Cancel" onPress={() => setPlayer(undefined)} disabled={busy} />
+    </Sheet>
   </Page>;
 }
-export function ScoringScreen({ route }: NativeStackScreenProps<Routes, 'Scoring'>) {
+export function ScoringScreen({ route, navigation }: NativeStackScreenProps<Routes, 'Scoring'>) {
   const { session, online, revision, enqueue, pending } = useApp(); const [matchId, setMatchId] = useState(route.params.id || ''); const [team, setTeam] = useState('');
   const [undoId, setUndoId] = useState(''); const [reason, setReason] = useState(''); const [busy, setBusy] = useState(false);
   const fixtures = useResource(() => getFixtures(online), [online, revision]);
@@ -83,12 +86,12 @@ export function ScoringScreen({ route }: NativeStackScreenProps<Routes, 'Scoring
       if (!compensates && (!sport.data?.scoring_events || !(eventType in sport.data.scoring_events) || !teamId)) throw new Error('Wait for the league’s event types to load, then choose a team.');
       await enqueue('score_event', selected.version, { match_id: selected.id, type: compensates ? 'compensation' : 'score',
         payload: compensates ? { compensates, reason: reason.trim() } : { team_id: teamId, event_type: eventType.trim() } }); setUndoId(''); setReason('');
-    } catch (e) { Alert.alert('Event not saved', e instanceof Error ? e.message : 'Please try again.'); } finally { setBusy(false); }
+    } catch (e) { Alert.alert('Event not saved', friendlyError(e, 'Could not save this event. Please try again.')); } finally { setBusy(false); }
   }
   return <Page><Title>Call the moment.</Title><Body>Pick a live match, then a team and score event.</Body>
     {fixtures.data?.some(item => item.cached) && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
     <Resource resource={fixtures}>{!fixtures.data?.some(item => item.status === 'Live') && <Empty message="No live matches are ready for scoring." />}<View style={ui.row}>{fixtures.data?.filter(item => item.status === 'Live').map(item => <Chip key={item.id} label={`${item.home} vs ${item.away}`} active={matchId === item.id} onPress={() => { setMatchId(item.id); setTeam(''); }} />)}</View></Resource>
-    {!!matchId && <Resource resource={match}>{selected && <><Card><Body strong>{selected.home} vs {selected.away}</Body><Text style={ui.score}>{selected.homeScore} : {selected.awayScore}</Text><Badge label={selected.cached || !online ? 'Offline - cached' : selected.status} icon={selected.cached || !online ? 'cloud-offline-outline' : 'radio-outline'} /></Card>
+    {!!matchId && <Resource resource={match}>{selected && <><Card><Body strong>{selected.home} vs {selected.away}</Body><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={ui.score}>{selected.homeScore} : {selected.awayScore}</Text><Badge label={selected.cached || !online ? 'Offline - cached' : selected.status} icon={selected.cached || !online ? 'cloud-offline-outline' : 'radio-outline'} /></Card>
       {selected.status === 'Live' && <><View style={ui.row}>{[selected.home, selected.away].map(label => <Chip key={label} label={label} active={chosenTeam === label} onPress={() => setTeam(label)} />)}</View>
         <Resource resource={sport}>{!sport.data || !Object.keys(sport.data.scoring_events || {}).length ? <><Body>Loading event types...</Body><Button title="Retry event types" onPress={sport.reload} /></> : <>
           {sport.data.cached && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
@@ -102,10 +105,13 @@ export function ScoringScreen({ route }: NativeStackScreenProps<Routes, 'Scoring
         {!!sport.data && !event.compensates && !selected.events.some(item => item.compensates === event.id) && selected.status === 'Live' && <Button title="Undo (compensate)" onPress={() => { setUndoId(event.id); setReason(''); }} />}</Card>)}
       {pending.filter(item => item.payload.match_id === matchId).map(item => <Card key={item.action_id}><Badge label="Pending" icon="time-outline" /><Body>{item.payload.type === 'compensation' ? 'Undo event' : 'Score event'}</Body></Card>)}
     </>}</Resource>}
-    <Modal visible={!!undoId} transparent animationType="slide" onRequestClose={() => setUndoId('')}><View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#16261FCC', padding: 20 }}><Card>
-      <Title>Undo this event?</Title><Body>The original remains in the log. A compensating event adjusts the score.</Body><Input accessibilityLabel="Reason for undo" placeholder="Why should this event be undone?" value={reason} onChangeText={setReason} multiline />
-      <Button title="Confirm undo" busy={busy} onPress={() => { if (!reason.trim()) { Alert.alert('Reason needed', 'Explain why this score event should be undone.'); return; } void record('', undoId); }} /><Button title="Cancel" busy={busy} onPress={() => setUndoId('')} />
-    </Card></View></Modal>
+    {pending.some(item => item.payload.match_id === matchId) && <Button title="Review pending events" onPress={() => navigation.navigate('SyncStatus')} />}
+    <Button title="Back to fixtures" onPress={() => navigation.popTo('Home', { screen: 'Fixtures' })} />
+    <Sheet visible={!!undoId} busy={busy} onClose={() => setUndoId('')}>
+      <Title>Undo this event?</Title><Body>The original remains in the log. A compensating event adjusts the score.</Body><Input accessibilityLabel="Reason for undo, required" placeholder="Why should this event be undone?" editable={!busy} value={reason} onChangeText={setReason} multiline maxLength={300} style={{ minHeight: 96, textAlignVertical: 'top' }} />
+      <Button title="Confirm undo" busy={busy} onPress={() => { if (!reason.trim()) { Alert.alert('Reason needed', 'Explain why this score event should be undone.'); return; } void record('', undoId); }} /><Button title="Cancel" disabled={busy} onPress={() => setUndoId('')} />
+    </Sheet>
   </Page>;
 }
+
 

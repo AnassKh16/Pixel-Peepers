@@ -1,37 +1,43 @@
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { signIn, Session } from '../services/api';
 import { colors, tenant } from '../theme';
+import { friendlyError } from '../services/errors';
 
 export function LoginScreen({ onSettings, onSignedIn }: { onSettings: () => void; onSignedIn: (session: Session) => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const passwordInput = useRef<React.ComponentRef<typeof TextInput>>(null); const submitting = useRef(false); const insets = useSafeAreaInsets();
   async function submit() {
+    if (submitting.current) return;
     if (!email.trim() || !password) { setError('Enter your email and password to sign in.'); return; }
-    setBusy(true); setError('');
+    submitting.current = true; setBusy(true); setError('');
     try {
       const session = await signIn(email, password);
       onSignedIn(session);
-    } catch (e) { setError(e instanceof Error ? e.message : 'We could not sign you in. Please try again.'); }
-    finally { setBusy(false); }
+    } catch (e) { setError(friendlyError(e, 'We could not sign you in. Please try again.')); }
+    finally { submitting.current = false; setBusy(false); }
   }
-  return <KeyboardAvoidingView style={s.fill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-    <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-      <View style={s.brand}><Text accessibilityLabel={`${tenant.name} logo`} style={s.logo}>{tenant.logo}</Text>
+  return <KeyboardAvoidingView style={s.fill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={insets.top + 56}>
+    <ScrollView contentContainerStyle={[s.content, { paddingBottom: insets.bottom + 16 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+      <View style={[s.brand, { paddingLeft: Math.max(28, insets.left), paddingRight: Math.max(28, insets.right) }]}><Text accessibilityLabel={`${tenant.name} logo`} style={s.logo}>{tenant.logo}</Text>
         <Text style={s.wordmark}>{tenant.name}</Text><Text style={s.kicker}>YOUR LEAGUE. YOUR PEOPLE.</Text></View>
       <View style={s.form}><Text style={s.title}>Back in the game.</Text>
         <Text style={s.body}>Fixtures, clubs, and every moment that counts.</Text>
         <Text style={s.label}>Email</Text><Input accessibilityLabel="Email" placeholder="you@nascon.test"
-          placeholderTextColor={colors.moss} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
-        <Text style={s.label}>Password</Text><Input accessibilityLabel="Password" placeholder="Your password"
-          placeholderTextColor={colors.moss} value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" onSubmitEditing={submit} />
+          placeholderTextColor={colors.moss} editable={!busy} value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" returnKeyType="next" onSubmitEditing={() => passwordInput.current?.focus()} />
+        <Text style={s.label}>Password</Text><Input ref={passwordInput} accessibilityLabel="Password" placeholder="Your password"
+          placeholderTextColor={colors.moss} editable={!busy} value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoComplete="current-password" returnKeyType="go" onSubmitEditing={submit} />
+        <Pressable accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'} onPress={() => setShowPassword(value => !value)} style={({ pressed }) => [s.link, pressed && { opacity: 0.6, transform: [{ scale: 0.97 }] }]}><Text style={s.linkText}>{showPassword ? 'Hide password' : 'Show password'}</Text></Pressable>
         {!!error && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s.error}>ⓘ {error}</Text>}
         <Button title="Sign in" onPress={submit} busy={busy} />
-        <Pressable onPress={onSettings} accessibilityRole="button" style={({ pressed }) => [s.link, pressed && { opacity: 0.6 }]}><Text style={s.linkText}>Server address →</Text></Pressable>
+        <Pressable onPress={onSettings} disabled={busy} accessibilityState={{ disabled: busy }} accessibilityRole="button" accessibilityLabel="Server address settings" style={({ pressed }) => [s.link, pressed && { opacity: 0.6, transform: [{ scale: 0.97 }] }]}><Text style={s.linkText}>Server address →</Text></Pressable>
         <Text style={s.note}>Demo accounts are enabled for this preview.</Text>
       </View>
     </ScrollView>

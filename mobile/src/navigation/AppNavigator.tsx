@@ -1,5 +1,6 @@
 import React from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator, NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Routes } from './types';
@@ -28,10 +29,13 @@ function Profile({ navigation, logout }: { navigation: Pick<NativeStackNavigatio
   </Page>;
 }
 function Home({ navigation, logout }: NativeStackScreenProps<Routes, 'Home'> & { logout: () => void }) {
+  const insets = useSafeAreaInsets(); const { fontScale } = useWindowDimensions();
   return <Tab.Navigator screenOptions={({ route }) => ({ headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 20 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
     headerRight: () => <View style={{ marginRight: 8 }}><SyncPill onPress={() => navigation.navigate('SyncStatus')} /></View>,
-    tabBarStyle: { backgroundColor: colors.forest, minHeight: 76, paddingTop: 8, paddingBottom: 8 }, tabBarActiveTintColor: colors.coral, tabBarInactiveTintColor: colors.cream,
-    tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 12 }, tabBarIcon: ({ focused }) => <Icon name={tabIcons[route.name]} color={focused ? colors.coral : colors.cream} />,
+    tabBarStyle: { backgroundColor: colors.forest, height: Math.max(84, 48 + 36 * fontScale) + insets.bottom, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 8) }, tabBarActiveTintColor: colors.coral, tabBarInactiveTintColor: colors.cream,
+    tabBarItemStyle: { minHeight: 56 }, tabBarLabelPosition: 'below-icon',
+    tabBarLabel: ({ children, color }) => <Text numberOfLines={2} style={{ color, fontFamily: 'Inter_500Medium', fontSize: 15, lineHeight: 18, textAlign: 'center', maxWidth: '100%' }}>{children}</Text>,
+    tabBarAccessibilityLabel: `${route.name} tab`, tabBarIcon: ({ focused }) => <Icon name={tabIcons[route.name]} color={focused ? colors.coral : colors.cream} />,
   })}>
     <Tab.Screen name="Fixtures">{() => <FixturesScreen navigation={navigation} />}</Tab.Screen>
     <Tab.Screen name="Standings" component={StandingsScreen} />
@@ -45,21 +49,23 @@ function ConnectedSettings({ logout }: { logout: () => void }) {
   return <SettingsScreen locked={pending.length > 0} onSaved={() => notify('Server address saved.')} onLogout={logout} />;
 }
 export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
-  const { pending, toast } = useApp();
+  const { session, pending, toast } = useApp();
   function logout() {
     Alert.alert('Sign out?', pending.length ? 'Pending actions stay saved for this account on this server. Sign back in to sync them.' : 'Your saved league data stays on this device.',
       [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign out', onPress: () => { void onLogout().catch(() => Alert.alert('Could not sign out', 'Please try again.')); } }]);
   }
   return <View style={{ flex: 1 }}><Stack.Navigator screenOptions={({ navigation }) => ({ headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 18 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
-    contentStyle: { backgroundColor: colors.cream }, headerRight: () => <SyncPill onPress={() => navigation.navigate('SyncStatus')} /> })}>
+    contentStyle: { backgroundColor: colors.cream }, headerBackButtonDisplayMode: 'minimal', headerRight: () => <SyncPill onPress={() => navigation.navigate('SyncStatus')} /> })}>
     <Stack.Screen name="Home" options={{ headerShown: false }}>{props => <Home {...props} logout={logout} />}</Stack.Screen>
     <Stack.Screen name="MatchDetail" component={MatchDetailScreen} options={{ title: 'Match' }} />
     <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product' }} />
     <Stack.Screen name="Cart" component={CartScreen} /><Stack.Screen name="Checkout" component={CheckoutScreen} />
     <Stack.Screen name="PaymentResult" component={PaymentResultScreen} options={{ title: 'Payment' }} /><Stack.Screen name="Receipt" component={ReceiptScreen} />
-    <Stack.Screen name="Roster" component={RosterScreen} /><Stack.Screen name="Scoring" component={ScoringScreen} />
+    {['Club Manager', 'Super Admin'].includes(session.role) && <Stack.Screen name="Roster" component={RosterScreen} />}
+    {['League Organizer', 'Super Admin'].includes(session.role) && <Stack.Screen name="Scoring" component={ScoringScreen} />}
     <Stack.Screen name="SyncStatus" component={SyncStatusScreen} options={{ title: 'Sync Status' }} />
     <Stack.Screen name="Settings">{() => <ConnectedSettings logout={logout} />}</Stack.Screen>
-  </Stack.Navigator>{!!toast && <View pointerEvents="none" accessibilityLiveRegion="polite" style={{ position: 'absolute', bottom: 96, left: 16, right: 16, borderRadius: 16, padding: 16, backgroundColor: colors.forest }}><Text style={[ui.body, { color: colors.cream }]}>{toast}</Text></View>}</View>;
+  </Stack.Navigator>{!!toast && <View pointerEvents="none" accessibilityLiveRegion="polite" style={{ position: 'absolute', bottom: 96, left: 16, right: 16, borderRadius: 16, padding: 16, backgroundColor: colors.forest }}><Text accessibilityLiveRegion="polite" style={[ui.body, { color: colors.cream }]}>{toast}</Text></View>}</View>;
 }
+
 

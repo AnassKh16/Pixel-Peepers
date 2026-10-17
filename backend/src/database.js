@@ -41,7 +41,16 @@ CREATE TABLE IF NOT EXISTS club_profiles (club_id text PRIMARY KEY REFERENCES cl
 CREATE TABLE IF NOT EXISTS player_profiles (player_id text PRIMARY KEY REFERENCES players(player_id), data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS product_profiles (product_id text PRIMARY KEY REFERENCES products(product_id), data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS roster_requests (request_id text PRIMARY KEY, data jsonb NOT NULL);
+CREATE SEQUENCE IF NOT EXISTS roster_audit_seq;
 CREATE TABLE IF NOT EXISTS roster_history (audit_id text PRIMARY KEY, player_id text NOT NULL, league_id text NOT NULL, data jsonb NOT NULL);
+ALTER TABLE roster_history ADD COLUMN IF NOT EXISTS entry_sequence bigint GENERATED ALWAYS AS IDENTITY;
+CREATE OR REPLACE FUNCTION reject_roster_history_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'Roster history is append-only';
+END;
+$$;
+DROP TRIGGER IF EXISTS roster_history_immutable ON roster_history;
+CREATE TRIGGER roster_history_immutable BEFORE UPDATE OR DELETE ON roster_history FOR EACH ROW EXECUTE FUNCTION reject_roster_history_mutation();
 CREATE TABLE IF NOT EXISTS offline_sync (device_id text NOT NULL, action_id text NOT NULL, data jsonb NOT NULL, PRIMARY KEY(device_id, action_id));
 `;
 
@@ -53,6 +62,7 @@ export async function resetDatabase(pool, redis, body = {}, sign = demoSigner) {
     await client.query('BEGIN');
     // Serialize resets across callers and application instances.
     await client.query('SELECT pg_advisory_xact_lock(5505)');
+    await client.query('ALTER SEQUENCE roster_audit_seq RESTART WITH 1');
     await client.query('TRUNCATE club_profiles, player_profiles, product_profiles, roster_requests, roster_history, offline_sync, order_outbox, orders, rosters, events, matches, users, variants, products, discounts, players, clubs, leagues, sports, tenants, app_state');
     for (const [id, name] of [['tenant-alpha', 'Alpha Sports'], ['tenant-beta', 'Beta Athletics']]) {
       await client.query('INSERT INTO tenants VALUES ($1,$2)', [id, name]);
@@ -88,3 +98,5 @@ export async function resetDatabase(pool, redis, body = {}, sign = demoSigner) {
     throw error;
   } finally { client.release(); }
 }
+
+

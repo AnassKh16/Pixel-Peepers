@@ -44,6 +44,18 @@ Bad credentials return 401 `UNAUTHENTICATED`. Email matching ignores case and su
 
 `GET /ping` is public and returns 200 `{"pong":true}`. `OPTIONS /<any-path>` is public and returns 204 with the CORS headers.
 
+## Sport configurations
+
+Both routes require a bearer token and allow every authenticated role. The existing 100 requests per rolling 10 seconds per-IP limit applies.
+
+`GET /sports/{sport_id}` returns 200 with the stored configuration object, exactly as saved by `POST /audit/v1/sports`:
+
+```json
+{"sport_id":"football","name":"Football","scoring_model":"event","periods":{"count":2,"duration_minutes":45},"scoring_events":{"goal":{"points":1}},"draw_allowed":true,"overtime":{"policy":"none"},"tie_break_order":["h2h_points","h2h_diff","overall_diff","scored","fair_play","draw_lots"],"roster":{"min_squad_size":11,"max_squad_size":25,"required_positions":{"gk":1}}}
+```
+
+An unknown id returns 404 `SPORT_NOT_FOUND`. `GET /sports` returns 200 `{"sports":[<the same complete configuration objects>]}`, ordered by sport_id. Configurations created through the audit API are immediately available. Render scoring controls and roster rules from these objects rather than inferring them from names.
+
 ## Leagues, fixtures and live scores
 
 All five roles can read their own tenant. The administrator can read all tenants. `GET /leagues` returns 200:
@@ -136,7 +148,7 @@ Supported types and payloads retain Section 5.9: `match_init` `{sport_id,home_te
 {"device_id":"phone-01","processed_order":["queued-start-1"],"results":[{"action_id":"queued-start-1","status":"applied","resolution":"appended","error":null,"server_version":1,"signature":"<hex>"}]}
 ```
 
-Actions execute in ascending queued_at order (input order for equal timestamps); results remain in input order. Permissions for the whole batch are checked before any action is applied; one unauthorized action rejects the batch with 403. Domain errors reject only the affected action. The batch is not all-or-nothing. A rejected result has `status:"rejected"`, null resolution/signature and an error object `{code,message,details}`. Valid stale versions append with `resolution:"rebased_append"`; a future version is rejected with `INVALID_BASE_VERSION`. Event versions are match log lengths; roster versions count successful mutations of that player in that league.
+Actions execute in ascending queued_at order (input order for equal timestamps); results remain in input order. Permissions for the whole batch are checked before any action is applied; one unauthorized action rejects the batch with 403. Domain errors reject only the affected action. The batch is not all-or-nothing. A rejected result has `status:"rejected"`, null resolution/signature and an error object `{code,message,details}`. Valid stale versions append with `resolution:"rebased_append"`; a future version is rejected with `INVALID_BASE_VERSION`. Event versions are match log lengths; roster versions count the current audit entries of that player, including automatic loan returns.
 
 Deduplication is scoped to authenticated user + device + action id. Retried actions, including previously rejected actions, return `status:"skipped_duplicate"`, null resolution/error/signature and the current server version. Retrying the same underlying event/request id under a new action id also cannot apply it twice. Keep event/request ids stable across retries. To retry a corrected rejected action, allocate a new action id. Per-action database locks serialize duplicate submissions; domain mutations keep their existing transaction and idempotency checks.
 
@@ -146,4 +158,6 @@ A roster action is available only to the source club's manager or the administra
 {"request_id":"transfer-1","league_id":"league-alpha-1","player_id":"demo-player-alpha-12","type":"transfer","from_squad_id":"squad-alpha-1","to_squad_id":"squad-alpha-2","effective_date":"2026-10-17","reason":"Squad move"}
 ```
 
-Use this as `payload` with action type `roster_action`. Supported mutations: `transfer`, `loan` (also requires `loan_end_date` later than effective_date), `release` (`to_squad_id` is null/omitted). Dates are YYYY-MM-DD. `requested_by` is assigned by the server. A successful mutation updates the registration immediately and records an audit history row; offline results expose the new roster version with null signature. Transfers/loans enforce the configured window, capacity and required positions; source membership and cross-tenant constraints apply. Domain errors include `LEAGUE_NOT_FOUND`, `SQUAD_NOT_FOUND`, `PLAYER_NOT_FOUND`, `NOT_IN_SQUAD`, `TRANSFER_WINDOW_CLOSED`, `PLAYER_ON_LOAN`, `SQUAD_FULL`, `MIN_POSITION_VIOLATION`, `CROSS_TENANT_TRANSFER`, `DUPLICATE_REQUEST_ID`, `INVALID_BASE_VERSION`. Read `/clubs/{id}` again after a successful sync to refresh the roster.
+Use this as `payload` with action type `roster_action`. Supported mutations: `transfer`, `loan` (also requires `loan_end_date` later than effective_date), `release` (`to_squad_id` is null/omitted). Dates are YYYY-MM-DD. `requested_by` is assigned by the server. A successful mutation records the dated registration and an immutable audit history row; offline results expose the new roster version with null signature. If the old squad has a live match, its player eligibility is retained for that match and the change is marked deferred_until_match_end. Loans return automatically on the day after loan_end_date; the audit history endpoint materializes that return once. Transfers/loans enforce the configured window, capacity and required positions; source membership and cross-tenant constraints apply. Domain errors include `LEAGUE_NOT_FOUND`, `SQUAD_NOT_FOUND`, `PLAYER_NOT_FOUND`, `NOT_IN_SQUAD`, `TRANSFER_WINDOW_CLOSED`, `PLAYER_ON_LOAN`, `SQUAD_FULL`, `MIN_POSITION_VIOLATION`, `CROSS_TENANT_TRANSFER`, `DUPLICATE_REQUEST_ID`, `INVALID_BASE_VERSION`. Read `/clubs/{id}` again after a successful sync to refresh the roster.
+
+The unauthenticated audit routes `/audit/v1/roster/setup`, `/audit/v1/roster/transfer`, `/audit/v1/roster/history/{player_id}?as_of=YYYY-MM-DD`, and `/audit/v1/offline-sync` implement the binding Sections 5.11 and 5.14 shapes. The audit sync envelope uses `roster_transfer` and returns `error_code`, per-result `processed_order`, and the applied/rejected/duplicate summary. The production mobile queue retains its documented `roster_action` and response format through a presentation adapter over the same domain services. A fresh roster setup replaces the league's active scenario; older history rows remain immutable and belong to the prior scenario generation.

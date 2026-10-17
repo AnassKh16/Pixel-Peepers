@@ -48,6 +48,15 @@ export function mobileRouter(pool,redis,tokens,sign,json) {
       if(squad&&!permits(actor,'roster',squad))denied();
     }
   };
+  route('get','/sports',async(_req,res)=>{
+    const {rows}=await pool.query('SELECT config FROM sports ORDER BY sport_id');
+    res.json({sports:rows.map(row=>row.config)});
+  });
+  route('get','/sports/:sport_id',async(req,res)=>{
+    const row=(await pool.query('SELECT config FROM sports WHERE sport_id=$1',[req.params.sport_id])).rows[0];
+    if(!row)throw new DomainError(404,'SPORT_NOT_FOUND','Sport not found');
+    res.json(row.config);
+  });
   route('get','/me',async(req,res)=>res.json({role:req.actor.role,user:publicUser(req.account)}));
   route('get','/leagues',async(req,res)=>{
     const rows=(await pool.query('SELECT league_id,tenant_id,config FROM leagues ORDER BY league_id')).rows.filter(row=>permits(req.actor,'league_read',row));
@@ -85,10 +94,11 @@ export function mobileRouter(pool,redis,tokens,sign,json) {
   });
   route('post','/events',async(req,res)=>{await authorizeScore(req.actor,req.body);const result=await appendEvent(pool,sign,validateEvent(req.body));res.status(result.status).json(result.response);});
   route('post','/offline-sync',async(req,res)=>{
-    const body=validateSync(req.body);
+    const body=validateSync(req.body,{legacy:true});
     // Authorize the entire batch before applying any queued action.
     for(const a of body.actions)if(a.type==='score_event')await authorizeScore(req.actor,a.payload);else await authorizeRoster(req.actor,a.payload);
-    res.json(await syncActions(pool,sign,req.actor,body));
+    res.json(await syncActions(pool,sign,req.actor,body,{legacy:true}));
   });
   return router;
 }
+

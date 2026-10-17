@@ -47,6 +47,19 @@ test('mobile API authentication, demo data, tenant scope and queued actions',{sk
       };
       await verify();await reset();await verify();
     });
+    await t.test('GET sport detail returns exact stored mystery config for any authenticated role; unknown id is 404',async()=>{
+      const initial=(await pool.query('SELECT config FROM sports ORDER BY sport_id LIMIT 1')).rows[0].config;
+      const config={...initial,sport_id:'mobile-read-sport',name:'Mobile mystery config'};
+      const created=await call('/audit/v1/sports',null,config);assert.equal(created.status,201);
+      const stored=(await pool.query('SELECT config FROM sports WHERE sport_id=$1',[config.sport_id])).rows[0].config;
+      for(const role of ['admin','organizer','manager','player','viewer']){const r=await call('/api/v1/sports/'+config.sport_id,tokens[role]);assert.equal(r.status,200);assert.deepEqual(r.body,stored);assert.deepEqual(Object.keys(r.body).sort(),['sport_id','name','scoring_model','periods','scoring_events','draw_allowed','overtime','tie_break_order','roster'].sort());}
+      const missing=await call('/api/v1/sports/unknown-sport',tokens.viewer);assert.equal(missing.status,404);assert.equal(missing.body.error.code,'SPORT_NOT_FOUND');assert.equal((await call('/api/v1/sports/'+config.sport_id)).status,401);
+    });
+    await t.test('GET sports lists the exact saved configs for every authenticated role',async()=>{
+      const expected=(await pool.query('SELECT config FROM sports ORDER BY sport_id')).rows.map(row=>row.config);assert.ok(expected.some(s=>s.sport_id==='mobile-read-sport'));
+      for(const role of ['admin','organizer','manager','player','viewer']){const r=await call('/api/v1/sports',tokens[role]);assert.equal(r.status,200);assert.deepEqual(r.body,{sports:expected});}
+      assert.equal((await call('/api/v1/sports')).status,401);
+    });
     await t.test('only organizer can score owned league; cross-tenant and other league denied before mutation',async()=>{
       for(const role of ['viewer','manager','player'])assert.equal((await call('/api/v1/events',tokens[role],event('mobile-denied'))).status,403);
       assert.equal((await call('/api/v1/events',tokens.organizer,event('mobile-foreign','demo-match-beta-1'))).status,403);

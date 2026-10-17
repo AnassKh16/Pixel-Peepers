@@ -1,3 +1,4 @@
+import {validateSync,syncActions} from './offline-sync.js';
 import { mobileRouter } from './mobile-api.js';
 import express from 'express';
 import { validateReset } from './baseline.js';
@@ -12,6 +13,7 @@ import { appendEvent, getScore } from './scoring.js';
 import { generateFixtures } from './fixtures.js';
 import { createLeague } from './leagues.js';
 import { getStandings } from './standings.js';
+import { setupRoster, transferRoster, rosterHistory } from './roster.js';
 
 const errorBody = (code, message, details = {}) => ({error: {code, message, details}});
 export function createApp(pool, redis, tokens = createTokenService(), sign) {
@@ -93,6 +95,21 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   });
   app.get('/audit/v1/standings/:league_id', async (req,res,next) => {
     try {res.json(await getStandings(pool,req.params.league_id));}catch(error){next(error);}
+  });
+  app.post('/audit/v1/roster/setup', async (req,res,next) => {
+    try {res.status(201).json(await setupRoster(pool,req.body));}catch(error){next(error);}
+  });
+  app.post('/audit/v1/roster/transfer', async (req,res,next) => {
+    try {
+      const result=await transferRoster(pool,req.body);
+      res.status(result.status).json(result.response);
+    }catch(error){next(error);}
+  });
+  app.get('/audit/v1/roster/history/:player_id', async (req,res,next) => {
+    try {res.json(await rosterHistory(pool,req.params.player_id,req.query.as_of));}catch(error){next(error);}
+  });
+  app.post('/audit/v1/offline-sync', async (req,res,next) => {
+    try {res.json(await syncActions(pool,sign,null,validateSync(req.body)));}catch(error){next(error);}
   });
   app.use((_req, res) => res.status(404).json(errorBody('NOT_FOUND', 'Route not found')));
   app.use((error, _req, res, _next) => {

@@ -1,48 +1,16 @@
 # Traceability Matrix
 
-Links every requirement to the code that implements it and the test that proves it.
-One row per requirement. If a requirement has no test yet, write `TODO` so the gap is visible.
-
-Status values: Not started | In progress | Done | Tested (passing)
-
-## Part I (Day 1)
-
-| Req ID | Requirement (short, from problem statement) | Code file(s) | Test file :: test name | Test type | Status |
-|---|---|---|---|---|---|
-| FR-1.1 | Sections 5.6 and 5.9: validated JSON-configured sports; immediate mystery-sport use; all three scoring models; signed append-only events and compensations; full score projection rebuilt on every read. No branches on sport ids or scoring event names. | backend/src/sports.js; backend/src/scoring.js; backend/src/validation.js; backend/src/signature.js; backend/src/database.js; backend/src/baseline.js; backend/src/app.js | backend/test/sports.test.js :: Section 5.6 sport configuration API (60 subtests); backend/test/scoring.test.js :: Section 5.9 mystery-sport event sourcing API (17 subtests: all models/errors, completed-match compensation, replay, independent signatures, concurrent sequences, database immutability). Full run_tests.sh: 190 passed, 0 failed, 0 skipped. | API / integration / concurrency | Tested (passing) |
-| FR-1.3 | Section 5.7 pure fixture generation implemented: balanced single/double round robin with withdrawals; seeded single elimination and third place; exact minimum-difference Swiss with Buchholz and bye priority; double elimination with conditional reset. Broader venue/player conflicts, manual rescheduling, and status broadcasts: TODO. | backend/src/fixtures.js; backend/src/brackets.js; backend/src/swiss.js; backend/src/matching.js; backend/src/double-elimination.js; backend/src/app.js | backend/test/fixtures-ab.test.js (37 tests); backend/test/fixtures-swiss.test.js (15 tests, independent exhaustive oracle, NO_VALID_PAIRING); backend/test/fixtures-double.test.js (22 tests, routing graph and complete playthroughs); backend/test/fixtures-api.test.js (live limits/errors and PostgreSQL/Redis state preservation). n=2..12 properties; double-elim n=2 correctly rejected; upper limits checked. Full run_tests.sh: 270 passed, 0 failed, 0 skipped. | Unit / property / API / integration | In progress |
-| FR-1.4 | Sections 5.8 and 5.10: atomic league and fixture-stream registration; standings rebuilt from event logs; restart-on-split mini-league ties; event/round differential and innings NRR; full H2H matrix; deterministic lots; qualification recomputed after compensation. | backend/src/leagues.js; backend/src/standings.js; backend/src/scoring.js; backend/src/app.js | backend/test/standings-unit.test.js (Appendix A vector 2 and zero-over qualification); backend/test/standings.test.js (validation/defaults, concurrent conflicts, 3-way restart, qualification flip, all-out NRR, round model, fair play and boundary labels). run_tests.sh: 281 passed, 0 failed, 0 skipped. Actual coverage is regenerated from test and API V8 profiles using backend/scripts/coverage-areas.json. | Unit / API / integration / concurrency | Tested (passing) |
-| FR-2.3 | Section 5.12 merchandise checkout/inventory, mock payments, discounts, signed PDF receipts, and order-status events are implemented and tested. Remaining catalogue, fulfilment, and pinned showcase features: TODO. | backend/src/checkout.js; backend/src/receipt.js; backend/src/order-events.js; backend/src/app.js; backend/src/database.js | backend/test/checkout.test.js :: Section 5.12 checkout and inventory against running stack (13 subtests: every checkout error code, rollback, replay, signatures, independent PDF text, Redis outbox delivery) | API / integration | In progress |
-| P1-R01 | | | | API / UI-web / UI-mobile / Load | |
-| P1-R02 | | | | | |
-| P1-R03 | | | | | |
-| P1-R04 | | | | | |
-| P1-R05 | | | | | |
-| P1-R06 | | | | | |
-| P1-R07 | | | | | |
-| P1-R08 | | | | | |
-
-## Part II (Day 2)
-
-| Req ID | Requirement (short, from problem statement) | Code file(s) | Test file :: test name | Test type | Status |
-|---|---|---|---|---|---|
-| P2-R01 | | | | | |
-| P2-R02 | | | | | |
-| P2-R03 | | | | | |
-| P2-R04 | | | | | |
-| P2-R05 | | | | | |
-| P2-R06 | | | | | |
-
-## Non-functional requirements
-
-| Req ID | Requirement (performance, reliability, etc.) | Code / config file(s) | Test / evidence | Status |
+| ID | Requirement (short) | Source files | Test file :: test name | Status |
 |---|---|---|---|---|
-| NFR-3 | Atomic inventory reservations prevent overselling and release stock after failed payments. | backend/src/checkout.js (one reservation transaction, ordered FOR UPDATE row locks, order-id serialization); backend/src/database.js (nonnegative constraints) | backend/test/checkout.test.js :: 20-thread last-unit burst: exactly one 201, nineteen 409, stock 0, reserved 0; 20-thread identical-order replay; opposite basket order; payment rollback. Observed last-unit burst: 529 ms. Full run_tests.sh: 111 passed, 0 failed, 0 skipped. | Tested (passing) |
-| NFR-01 | | | | |
-| NFR-02 | | | | |
-
-## Related ADRs
-
-| Req ID | ADR |
-|---|---|
-| | |
+| FR-1.1 | Multi-sport JSON configuration and event-sourced scoring with signed compensations. | backend/src/sports.js; backend/src/scoring.js; backend/src/signature.js; backend/src/database.js; backend/src/app.js | backend/test/sports.test.js :: Section 5.6 sport configuration API; backend/test/scoring.test.js :: mystery-sport event sourcing API; backend/test/signature.test.js :: Appendix A signature test vector 1 | Done |
+| FR-1.2 | League and tournament setup across single-stage, divisions, promotion/relegation, knockout, and hybrid formats. | backend/src/leagues.js; backend/src/fixtures.js; backend/src/brackets.js; backend/src/double-elimination.js; backend/src/app.js | backend/test/standings.test.js :: validation, references, defaults and fixture streams; backend/test/fixtures-api.test.js :: all formats and n=2..12 | Partial |
+| FR-1.3 | Custom round-robin, elimination, Swiss, and double-elimination fixture generation. | backend/src/fixtures.js; backend/src/brackets.js; backend/src/swiss.js; backend/src/matching.js; backend/src/double-elimination.js; backend/src/app.js | backend/test/fixtures-ab.test.js :: round-robin and bracket properties; backend/test/fixtures-swiss.test.js :: exact first round and exhaustive optimality; backend/test/fixtures-double.test.js :: counts, seeds, byes, routing and full playthrough; backend/test/fixtures-api.test.js :: all formats and n=2..12 | Partial |
+| FR-1.4 | Automated standings, configurable tie-breakers, head-to-head restarts, differentials, NRR, and qualification labels. | backend/src/standings.js; backend/src/scoring.js; backend/src/leagues.js; backend/src/app.js | backend/test/standings-unit.test.js :: Appendix A test vector 2; backend/test/standings.test.js :: live league and standings contract | Done |
+| FR-2.1 | Club profiles, active rosters, staff/store context, and strict tenant isolation. | backend/src/policy.js; backend/src/mobile-api.js; backend/src/database.js; mobile/src/screens/ClubScreens.tsx; mobile/src/services/api.ts | backend/test/mobile.test.js :: foreign clubs, leagues and matches are forbidden for every tenant role; backend/test/security.test.js :: unknown ids are 404 | Partial |
+| FR-2.2 | Player registry with transfers, loans, releases, windows, squad rules, audit history, and offline roster actions. | backend/src/roster.js; backend/src/roster-setup.js; backend/src/roster-rules.js; backend/src/roster-projection.js; backend/src/offline-sync.js; backend/src/database.js; backend/src/app.js; mobile/src/screens/ClubScreens.tsx; mobile/src/screens/SyncStatusScreen.tsx | backend/test/roster.test.js :: Section 5.11 exact roster contract, ordered rules, immutable history and concurrency; backend/test/offline-sync.test.js :: audit offline sync uses scoring and roster domain services; backend/test/mobile.test.js :: manager queue transfers own player | Done |
+| FR-2.3 | Merchandise catalogue, variants, discounts, checkout, receipts, and order-status events. | backend/src/checkout.js; backend/src/receipt.js; backend/src/order-events.js; backend/src/database.js; backend/src/mobile-api.js; mobile/src/screens/StoreScreens.tsx; mobile/src/services/api.ts | backend/test/checkout.test.js :: Section 5.12 checkout and inventory against running stack; backend/test/mobile.test.js :: checkout wrapper binds customer | Partial |
+| FR-5.1 | Five-tier RBAC with scoped permissions and tenant isolation. | backend/src/policy.js; backend/src/auth.js; backend/src/app.js; backend/src/mobile-api.js; mobile/src/providers/AppProvider.tsx; mobile/src/screens/LoginScreen.tsx | backend/test/security.test.js :: Section 5.13 live security contract; backend/test/mobile.test.js :: five demo logins and tenant scope | Done |
+| NFR-3 | Concurrent inventory correctness with zero overselling and rollback after failed payment. | backend/src/checkout.js; backend/src/database.js; backend/src/order-events.js | backend/test/checkout.test.js :: 20-thread last-unit burst; backend/test/checkout.test.js :: payment failure reservations; backend/test/checkout.test.js :: opposite basket order avoids deadlocks | Done |
+| NFR-4 | Offline mobile caching for fixtures, standings, profiles, and queued scoring/roster actions with conflict handling. | mobile/src/storage/database.ts; mobile/src/providers/AppProvider.tsx; mobile/src/services/api.ts; mobile/src/screens/SyncStatusScreen.tsx; backend/src/offline-sync.js; backend/src/mobile-api.js | backend/test/mobile.test.js :: offline scoring sorts timestamps and rebases stale versions; backend/test/mobile.test.js :: manager queue transfers own player; backend/test/offline-sync.test.js :: sorted processing and every resolution | Done |
+| NFR-5 | API/mobile security, secure token storage, rate limiting, validation, and five-role RBAC. | backend/src/auth.js; backend/src/policy.js; backend/src/rate-limit.js; backend/src/validation.js; backend/src/app.js; mobile/src/config.ts; mobile/src/providers/AppProvider.tsx | backend/test/security.test.js :: missing, malformed, tampered, expired and alg:none are 401; backend/test/security.test.js :: 150-request probe; backend/test/mobile.test.js :: bad credentials, missing and tampered tokens | Partial |
+| NFR-7 | One-command reproducible container startup with seeded baseline data. | docker-compose.yml; backend/Dockerfile; backend/src/server.js; backend/src/database.js; backend/src/demo.js; backend/src/baseline.js | backend/test/integration.test.js :: live readiness, reset defaults, overrides, validation and deterministic database state; backend/test/mobile.test.js :: startup and reset seed demo data | Done |

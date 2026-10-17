@@ -8,6 +8,7 @@ import { checkout, inventory, CheckoutError } from './checkout.js';
 import { DomainError } from './validation.js';
 import { createSport } from './sports.js';
 import { appendEvent, getScore } from './scoring.js';
+import { generateFixtures } from './fixtures.js';
 
 const errorBody = (code, message, details = {}) => ({error: {code, message, details}});
 export function createApp(pool, redis, tokens = createTokenService(), sign) {
@@ -76,6 +77,10 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   });
   app.get('/audit/v1/score/:match_id', async (req, res, next) => {
     try { res.json(await getScore(pool, req.params.match_id)); }
+    catch (error) { next(error); }
+  });
+  app.post('/audit/v1/fixtures', (req, res, next) => {
+    try { res.json(generateFixtures(req.body)); }
     catch (error) { next(error); }
   });
   app.use((_req, res) => res.status(404).json(errorBody('NOT_FOUND', 'Route not found')));

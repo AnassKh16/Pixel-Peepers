@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { signIn, Session } from '../services/api';
@@ -16,8 +15,6 @@ export function LoginScreen({ onSettings, onSignedIn }: { onSettings: () => void
     setBusy(true); setError('');
     try {
       const session = await signIn(email, password);
-      await SecureStore.setItemAsync('skorly.token', session.token);
-      await SecureStore.setItemAsync('skorly.session', JSON.stringify(session));
       onSignedIn(session);
     } catch (e) { setError(e instanceof Error ? e.message : 'We could not sign you in. Please try again.'); }
     finally { setBusy(false); }

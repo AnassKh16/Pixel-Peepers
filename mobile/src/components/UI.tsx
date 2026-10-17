@@ -33,10 +33,10 @@ export function Resource({ resource, children }: React.PropsWithChildren<{ resou
   return <>{children}</>;
 }
 export function SyncPill({ onPress }: { onPress: () => void }) {
-  const { online, syncing, pending } = useApp();
-  const label = syncing ? 'Syncing' : online ? 'Online' : 'Offline';
+  const { online, cached, syncing, pending } = useApp();
+  const label = syncing ? 'Syncing' : online && !cached ? 'Online' : 'Offline';
   return <Pressable accessibilityRole="button" accessibilityLabel={`${label}, ${pending.length} pending actions. Open Sync Status`} onPress={onPress} style={({ pressed }) => [ui.sync, pressed && { opacity: 0.6 }]}>
-    {syncing ? <ActivityIndicator color={colors.forest} size="small" /> : <Icon name={online ? 'checkmark-circle-outline' : 'cloud-offline-outline'} size={18} />}
+    {syncing ? <ActivityIndicator color={colors.forest} size="small" /> : <Icon name={online && !cached ? 'checkmark-circle-outline' : 'cloud-offline-outline'} size={18} />}
     <Text style={ui.badgeText}>{label}</Text><Text style={ui.count}>{pending.length}</Text>
   </Pressable>;
 }

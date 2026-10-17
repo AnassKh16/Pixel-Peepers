@@ -11,7 +11,7 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { Button } from './src/components/Button';
 import { loadServerAddress } from './src/config';
-import { Session } from './src/services/api';
+import { Session, setApiSession } from './src/services/api';
 import { colors } from './src/theme';
 import { AppProvider } from './src/providers/AppProvider';
 import { AppNavigator } from './src/navigation/AppNavigator';
@@ -28,13 +28,13 @@ export default function App() {
       if (saved) {
         const candidate = JSON.parse(saved) as Session;
         const token = await SecureStore.getItemAsync('skorly.token');
-        if (candidate.token === token && ['Super Admin', 'League Organizer', 'Club Manager', 'Player', 'Viewer'].includes(candidate.role)) setSession(candidate);
+        if (candidate.token === token && !token?.startsWith('mock-') && candidate.user && ['Super Admin', 'League Organizer', 'Club Manager', 'Player', 'Viewer'].includes(candidate.role)) { setApiSession(candidate); setSession(candidate); }
       }
       setReady(true);
     } catch { setStartupError('Could not load your saved settings. Please try again.'); }
   }
   useEffect(() => { void initialize(); }, []);
-  async function logout() { await SecureStore.deleteItemAsync('skorly.session'); await SecureStore.deleteItemAsync('skorly.token'); setSession(null); }
+  async function logout() { await SecureStore.deleteItemAsync('skorly.session'); await SecureStore.deleteItemAsync('skorly.token'); setApiSession(null); setSession(null); }
   if (startupError || fontError) return <SafeAreaProvider><View style={s.center}><Text style={s.body}>{startupError || 'Could not load the app fonts. Please reopen the app.'}</Text>{!!startupError && <Button title="Retry" onPress={initialize} />}</View></SafeAreaProvider>;
   if (!ready || !fontsLoaded) return <View style={s.center}><ActivityIndicator accessibilityLabel="Loading Skorly" color={colors.forest} /></View>;
   return <SafeAreaProvider><StatusBar style="dark" /><NavigationContainer theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: colors.forest, background: colors.cream, card: colors.cream, text: colors.forest, border: colors.sand } }}>

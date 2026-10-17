@@ -18,10 +18,10 @@ type Tabs = { Fixtures: undefined; Standings: undefined; Store: undefined; Club:
 const Tab = createBottomTabNavigator<Tabs>();
 const tabIcons = { Fixtures: 'football-outline', Standings: 'podium-outline', Store: 'bag-outline', Club: 'people-outline', Profile: 'person-circle-outline' } as const;
 function Profile({ navigation, logout }: { navigation: Pick<NativeStackNavigationProp<Routes>, 'navigate'>; logout: () => void }) {
-  const { session, revision } = useApp(); const resource = useResource(() => getOrders(session.email), [revision]);
-  return <Page><Title>Your corner of the club.</Title><Card><Body strong>{session.email}</Body><Badge label={session.role} icon="person-outline" /><Body>Demo mode · realistic local data</Body></Card>
-    {session.role === 'Club Manager' && <Button title="Manage roster" onPress={() => navigation.navigate('Roster')} />}
-    {session.role === 'League Organizer' && <Button title="Scoring entry" onPress={() => navigation.navigate('Scoring', {})} />}
+  const { session, revision, cart } = useApp(); const resource = useResource(() => getOrders(session.email), [revision, cart.length]);
+  return <Page><Title>Your corner of the club.</Title><Card><Body strong>{session.email}</Body><Badge label={session.role} icon="person-outline" /><Body>Connected league account</Body></Card>
+    {['Club Manager', 'Super Admin'].includes(session.role) && <Button title="Manage roster" onPress={() => navigation.navigate('Roster')} />}
+    {['League Organizer', 'Super Admin'].includes(session.role) && <Button title="Scoring entry" onPress={() => navigation.navigate('Scoring', {})} />}
     <Button title="Settings" onPress={() => navigation.navigate('Settings')} /><Button title="Sync Status" onPress={() => navigation.navigate('SyncStatus')} />
     <Title>Your receipts</Title><Resource resource={resource}>{!resource.data?.some(order => order.status === 'Paid') && <Empty message="Your paid orders will appear here." />}{resource.data?.filter(order => order.status === 'Paid').map(order => <LinkCard key={order.id} label={`Open receipt ${order.id}`} onPress={() => navigation.navigate('Receipt', { id: order.id })}><Body>{new Date(order.createdAt).toLocaleString()}</Body><Body strong>{money(order.total)}</Body></LinkCard>)}</Resource>
     <Button title="Sign out" onPress={logout} />

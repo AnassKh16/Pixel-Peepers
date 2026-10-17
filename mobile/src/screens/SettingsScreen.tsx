@@ -25,7 +25,7 @@ export function SettingsScreen({ locked = false, onSaved, onLogout }: { locked?:
     {locked && <Text style={s.body}>Sync your pending actions before changing servers.</Text>}
     <Button title="Save address" onPress={save} busy={saving} />
     {!!message && <Text accessibilityLiveRegion="polite" style={s.body}>{message}</Text>}
-    <Text style={s.body}>Demo preview uses local mock data. The server address will be used when the REST API is connected.</Text>
+    <Text style={s.body}>The app connects to this server. If it cannot be reached, saved content is labelled Offline - cached. Sign out and sign in again after changing servers.</Text>
     {onLogout && <Button title="Sign out" onPress={onLogout} />}
   </ScrollView>;
 }

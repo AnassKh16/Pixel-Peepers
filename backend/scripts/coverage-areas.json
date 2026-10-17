@@ -3,6 +3,7 @@
   "scoring": ["sports.js", "scoring.js", "signature.js"],
   "standings": ["leagues.js", "standings.js"],
   "store": ["checkout.js", "receipt.js", "order-events.js"],
-  "roster": [],
+  "roster": ["roster.js"],
   "rbac": ["auth.js", "policy.js", "rate-limit.js"]
 }
+

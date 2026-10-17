@@ -14,7 +14,7 @@ test('live readiness, reset defaults, overrides, validation and deterministic da
     assert.deepEqual(await (await reset()).json(), expected);
     const snapshot = async () => {
       const result = {};
-      for (const table of ['tenants','sports','leagues','clubs','players','products','variants','discounts','users','app_state']) {
+      for (const table of ['tenants','sports','leagues','clubs','players','products','variants','discounts','users','app_state','matches','events','club_profiles','player_profiles','product_profiles','rosters']) {
         result[table] = (await pool.query(`SELECT * FROM ${table} ORDER BY 1`)).rows;
       }
       return result;
@@ -26,7 +26,8 @@ test('live readiness, reset defaults, overrides, validation and deterministic da
     await redis.set('temporary', 'value');
     assert.deepEqual(await (await reset()).json(), expected);
     assert.deepEqual(await snapshot(), first);
-    assert.equal((await pool.query('SELECT * FROM matches')).rowCount, 0);
+    assert.equal((await pool.query('SELECT * FROM matches')).rowCount, 7);
+    assert.equal((await pool.query('SELECT * FROM matches WHERE match_id=$1',['temporary'])).rowCount,0);
     assert.equal(await redis.get('temporary'), null);
     const override = await (await reset({seed: 7, stock: {'var-jersey-001-M': 0}})).json();
     assert.equal(override.seed, 7);
@@ -43,3 +44,4 @@ test('live readiness, reset defaults, overrides, validation and deterministic da
     await reset();
   } finally { await redis.quit(); await pool.end(); }
 });
+

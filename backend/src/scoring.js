@@ -69,7 +69,7 @@ export function projectScore(matchId, meta, config, records) {
       payload: request.payload, signature: response.signature, compensated: corrections.has(request.event_id), compensated_by: corrections.get(request.event_id) ?? null}))};
 }
 
-export async function appendEvent(pool, sign, body) {
+export async function appendEvent(pool, sign, body, {baseVersion} = {}) {
   const request = validateEvent(body);
   const client = await pool.connect();
   try {
@@ -100,6 +100,7 @@ export async function appendEvent(pool, sign, body) {
       config = (await client.query('SELECT config FROM sports WHERE sport_id=$1', [meta.sport_id])).rows[0].config;
     }
     const records = (await client.query('SELECT data FROM events WHERE match_id=$1 ORDER BY sequence', [request.match_id])).rows.map(row => row.data);
+    if (baseVersion !== undefined && baseVersion > records.length) throw new DomainError(409, 'INVALID_BASE_VERSION', 'Base version exceeds server version');
     const projection = projectScore(request.match_id, meta, config, records);
     const payload = request.payload;
     if (['score','discipline','tiebreak_winner'].includes(request.type) && ![meta.home_team_id, meta.away_team_id].includes(payload.team_id)) validationError(['payload.team_id']);
@@ -124,7 +125,7 @@ export async function appendEvent(pool, sign, body) {
     const response = {event_id: request.event_id, match_id: request.match_id, type: request.type, sequence, match_version: sequence, signature: sign(request.event_id, payload)};
     await client.query('INSERT INTO events(event_id,match_id,sequence,data) VALUES ($1,$2,$3,$4)', [request.event_id, request.match_id, sequence, {request, response}]);
     await client.query('COMMIT');
-    return {status: 201, response};
+    return {status: 201, response, previous_version: records.length};
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -139,3 +140,4 @@ export async function getScore(pool, matchId) {
   if (!row) throw new DomainError(404, 'MATCH_NOT_FOUND', 'Match stream does not exist');
   return projectScore(matchId, row.meta, row.config, row.records);
 }
+

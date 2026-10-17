@@ -1,10 +1,10 @@
 // Single role x action x scope policy. Empty cells deny by default.
 export const policy = {
-  super_admin: {tenants: ['platform'], fixtures: ['any'], roster: ['any'], products: ['any'], player: ['any'], club: ['any'], config: ['platform']},
-  league_organizer: {fixtures: ['own_league'], club: ['tenant']},
-  club_manager: {roster: ['own_club'], products: ['own_club'], player: ['own_club'], club: ['tenant']},
-  player: {player: ['self'], club: ['tenant']},
-  viewer: {club: ['tenant']}
+  super_admin: {league_read:['any'], catalogue:['any'], purchase:['any'], score:['any'], tenants: ['platform'], fixtures: ['any'], roster: ['any'], products: ['any'], player: ['any'], club: ['any'], config: ['platform']},
+  league_organizer: {league_read:['tenant'], catalogue:['tenant'], purchase:['tenant'], score:['own_league'], fixtures: ['own_league'], club: ['tenant']},
+  club_manager: {league_read:['tenant'], catalogue:['tenant'], purchase:['tenant'], roster: ['own_club'], products: ['own_club'], player: ['own_club'], club: ['tenant']},
+  player: {league_read:['tenant'], catalogue:['tenant'], purchase:['tenant'], player: ['self'], club: ['tenant']},
+  viewer: {league_read:['tenant'], catalogue:['tenant'], purchase:['tenant'], club: ['tenant']}
 };
 export function permits(user, action, target) {
   const scopes = policy[user.role]?.[action] ?? [];
@@ -25,3 +25,4 @@ const queries = {
 export async function findTarget(pool, kind, id) {
   return (await pool.query(queries[kind], [id])).rows[0];
 }
+

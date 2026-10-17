@@ -49,6 +49,7 @@ test('Section 5.9 mystery-sport event sourcing API', {skip:process.env.RUN_INTEG
   const compensate=(match,event_id)=>append(make(match,'compensation',{compensates:event_id,reason:'Correction'}));
   const reset=()=>fetch(base+'/audit/v1/reset',{method:'POST'});
   await reset();
+  const baselineEvents=(await pool.query('SELECT * FROM events')).rowCount,baselineMatches=(await pool.query('SELECT * FROM matches')).rowCount;
   try {
     for(const model of ['event','innings','round']) {
       const response=await request('/audit/v1/sports',configured(model));
@@ -60,14 +61,14 @@ test('Section 5.9 mystery-sport event sourcing API', {skip:process.env.RUN_INTEG
         const details=await expectError(await request('/audit/v1/events',body),400,'VALIDATION_ERROR');
         assert.ok(Array.isArray(details.fields)&&details.fields.length>0);
       }
-      assert.equal((await pool.query('SELECT count(*)::int AS count FROM events')).rows[0].count,0);
+      assert.equal((await pool.query('SELECT count(*)::int AS count FROM events')).rows[0].count,baselineEvents);
     });
     await t.test('unknown match, sport and league return exact reference errors',async()=>{
       await expectError(await get('missing'),404,'MATCH_NOT_FOUND');
       await expectError(await request('/audit/v1/events',make('missing','match_start')),404,'MATCH_NOT_FOUND');
       await expectError(await request('/audit/v1/events',make('missing','match_init',{sport_id:'missing',home_team_id:'home',away_team_id:'away'})),404,'SPORT_NOT_FOUND');
       await expectError(await request('/audit/v1/events',make('missing','match_init',{sport_id:'scoring-event',home_team_id:'home',away_team_id:'away',league_id:'missing'})),404,'LEAGUE_NOT_FOUND');
-      assert.equal((await pool.query('SELECT count(*)::int AS count FROM matches')).rows[0].count,0);
+      assert.equal((await pool.query('SELECT count(*)::int AS count FROM matches')).rows[0].count,baselineMatches);
     });
     let homeScore,awayScore,awayExtra,discipline,tiebreak,end;
     await t.test('event model uses arbitrary configured names, points, UTF-8 signatures and exact initial shape',async()=>{
@@ -283,9 +284,10 @@ test('Section 5.9 mystery-sport event sourcing API', {skip:process.env.RUN_INTEG
     });
     await t.test('reset removes custom sports and complete immutable logs',async()=>{
       assert.equal((await reset()).status,200);
-      assert.equal((await pool.query('SELECT * FROM events')).rowCount,0);
+      assert.equal((await pool.query('SELECT * FROM events')).rowCount,baselineEvents);
       assert.equal((await pool.query('SELECT * FROM sports')).rowCount,4);
       await expectError(await get('event-match'),404,'MATCH_NOT_FOUND');
     });
   } finally {await reset();await pool.end();}
 });
+

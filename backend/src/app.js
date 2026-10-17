@@ -1,3 +1,4 @@
+import { mobileRouter } from './mobile-api.js';
 import express from 'express';
 import { validateReset } from './baseline.js';
 import { resetDatabase } from './database.js';
@@ -34,7 +35,9 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   probe('patch', '/audit/v1/rbac/players/:id', 'player', 'player');
   probe('get', '/audit/v1/rbac/clubs/:id', 'club', 'club');
   probe('get', '/audit/v1/rbac/platform/config', 'config');
+  app.use('/api/v1', (_req,res,next)=>{res.set('Access-Control-Allow-Origin','*');res.set('Access-Control-Allow-Headers','Authorization, Content-Type');res.set('Access-Control-Allow-Methods','GET, POST, OPTIONS');res.set('Access-Control-Expose-Headers','Retry-After');next();});
   app.use('/api/v1', rateLimit(redis));
+  app.use('/api/v1', mobileRouter(pool,redis,tokens,sign,json));
   app.use(json);
   app.post('/audit/v1/rbac-matrix', async (_req, res, next) => {
     try {
@@ -55,7 +58,7 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
     const body = req.body === undefined ? {} : req.body;
     const fields = validateReset(body);
     if (fields.length) return res.status(400).json(errorBody('VALIDATION_ERROR', 'Invalid reset parameters', {fields}));
-    try { res.json(await resetDatabase(pool, redis, body)); } catch (error) { next(error); }
+    try { res.json(await resetDatabase(pool, redis, body, sign)); } catch (error) { next(error); }
   });
   app.post('/audit/v1/checkout', async (req, res, next) => {
     try {
@@ -101,3 +104,4 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   });
   return app;
 }
+

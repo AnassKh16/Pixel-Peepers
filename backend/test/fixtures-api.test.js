@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import pg from 'pg';
 import {createClient} from 'redis';
 const teams=n=>Array.from({length:n},(_,i)=>`t${i+1}`);
-const post=body=>fetch('http://127.0.0.1:8080/audit/v1/fixtures',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+const post=body=>fetch(((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '/audit/v1/fixtures'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 test('Section 5.7 live fixture API and absence of side effects',{skip:process.env.RUN_INTEGRATION!=='1'},async t=>{
   const pool=new pg.Pool({connectionString:process.env.DATABASE_URL}),redis=createClient({url:process.env.REDIS_URL});await redis.connect();
   const snapshot=async()=>{
@@ -30,7 +30,7 @@ test('Section 5.7 live fixture API and absence of side effects',{skip:process.en
       const response=await post({format:'swiss',teams:field,params:{round:4,total_rounds:5,history}});assert.equal(response.status,409);const body=await response.json();assert.equal(body.error.code,'NO_VALID_PAIRING');assert.deepEqual(body.error.details,{round:4});
     });
     await t.test('JSON errors and 1 MB body limit remain enforced',async()=>{
-      const bad=await fetch('http://127.0.0.1:8080/audit/v1/fixtures',{method:'POST',headers:{'Content-Type':'application/json'},body:'{'});assert.equal(bad.status,400);assert.equal((await bad.json()).error.code,'VALIDATION_ERROR');
+      const bad=await fetch(((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '/audit/v1/fixtures'),{method:'POST',headers:{'Content-Type':'application/json'},body:'{'});assert.equal(bad.status,400);assert.equal((await bad.json()).error.code,'VALIDATION_ERROR');
       const large=await post({format:'round_robin',teams:teams(4),ignored:'x'.repeat(1048576)});assert.equal(large.status,413);assert.equal((await large.json()).error.code,'PAYLOAD_TOO_LARGE');
     });
     await t.test('fixtures preserve every PostgreSQL row and all Redis state',async()=>{

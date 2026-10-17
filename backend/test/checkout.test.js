@@ -9,7 +9,7 @@ import { publishOrderEvents } from '../src/order-events.js';
 
 const M = 'var-jersey-001-M';
 const L = 'var-jersey-001-L';
-const base = 'http://127.0.0.1:8080';
+const base = ((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '');
 const order = (order_id, changes = {}) => ({order_id, customer_id: 'cust-001', items: [{variant_id: M, quantity: 1}], discount_code: null, payment: {token: 'tok_success'}, ...changes});
 const post = (path, body) => fetch(base + path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
 const stock = async (variant = M) => {

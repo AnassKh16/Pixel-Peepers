@@ -1,0 +1,13 @@
+import pg from 'pg';
+import {createClient} from 'redis';
+import {createApp} from '../src/app.js';
+import {createSigner} from '../src/signature.js';
+import {schema,resetDatabase} from '../src/database.js';
+import {startOrderPublisher} from '../src/order-events.js';
+const sign=createSigner(process.env.DAY1_SALT);
+const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:10,connectionTimeoutMillis:2000,query_timeout:8000});
+const redis=createClient({url:process.env.REDIS_URL});redis.on('error',error=>console.error('Test Redis:',error.message));
+await redis.connect();await pool.query(schema);await resetDatabase(pool,redis);
+const stopPublisher=startOrderPublisher(pool,redis);
+const server=createApp(pool,redis,undefined,sign).listen(8081,'127.0.0.1',()=>process.send({ready:true}));
+process.on('SIGTERM',()=>{stopPublisher();server.close(async()=>{await redis.quit();await pool.end();process.exit(0);});});

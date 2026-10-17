@@ -1,0 +1,8 @@
+{
+  "fixtures": ["fixtures.js", "brackets.js", "swiss.js", "matching.js", "double-elimination.js"],
+  "scoring": ["sports.js", "scoring.js", "signature.js"],
+  "standings": ["leagues.js", "standings.js"],
+  "store": ["checkout.js", "receipt.js", "order-events.js"],
+  "roster": [],
+  "rbac": ["auth.js", "policy.js", "rate-limit.js"]
+}

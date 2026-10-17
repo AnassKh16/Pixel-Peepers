@@ -7,9 +7,9 @@ test('live readiness, reset defaults, overrides, validation and deterministic da
   const pool = new pg.Pool({connectionString: process.env.DATABASE_URL});
   const redis = createClient({url: process.env.REDIS_URL});
   await redis.connect();
-  const reset = body => fetch('http://127.0.0.1:8080/audit/v1/reset', {method: 'POST', headers: {'Content-Type': 'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)})});
+  const reset = body => fetch(((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '/audit/v1/reset'), {method: 'POST', headers: {'Content-Type': 'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)})});
   try {
-    assert.deepEqual(await (await fetch('http://127.0.0.1:8080/health')).json(), {status: 'ok'});
+    assert.deepEqual(await (await fetch(((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '/health'))).json(), {status: 'ok'});
     const expected = {status: 'reset_complete', seed: 42, sports: ['football','basketball','cricket','esports'], tenants: ['tenant-alpha','tenant-beta'], stock: {'var-jersey-001-M': 1, 'var-jersey-001-L': 5}};
     assert.deepEqual(await (await reset()).json(), expected);
     const snapshot = async () => {
@@ -36,7 +36,7 @@ test('live readiness, reset defaults, overrides, validation and deterministic da
       assert.equal(response.status, 400);
       assert.equal((await response.json()).error.code, 'VALIDATION_ERROR');
     }
-    const malformed = await fetch('http://127.0.0.1:8080/audit/v1/reset', {method: 'POST',headers: {'Content-Type':'application/json'},body:'{'});
+    const malformed = await fetch(((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '/audit/v1/reset'), {method: 'POST',headers: {'Content-Type':'application/json'},body:'{'});
     assert.equal(malformed.status, 400);
     const oversized = await reset({ignored: 'x'.repeat(1024 * 1024)});
     assert.equal(oversized.status, 413);

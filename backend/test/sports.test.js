@@ -10,7 +10,7 @@ export const mystery = (model = 'event', overrides = {}) => ({
   draw_allowed: false, overtime: {policy: 'shootout'}, roster: {min_squad_size: 1, max_squad_size: 9, required_positions: {anchor: 1}}, ...overrides
 });
 
-const base = 'http://127.0.0.1:8080';
+const base = ((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '');
 const post = body => fetch(base+'/audit/v1/sports', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
 const defaults = ['h2h_points','h2h_diff','overall_diff','scored','fair_play','draw_lots'];
 

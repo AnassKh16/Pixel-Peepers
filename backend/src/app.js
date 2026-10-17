@@ -9,6 +9,8 @@ import { DomainError } from './validation.js';
 import { createSport } from './sports.js';
 import { appendEvent, getScore } from './scoring.js';
 import { generateFixtures } from './fixtures.js';
+import { createLeague } from './leagues.js';
+import { getStandings } from './standings.js';
 
 const errorBody = (code, message, details = {}) => ({error: {code, message, details}});
 export function createApp(pool, redis, tokens = createTokenService(), sign) {
@@ -82,6 +84,12 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   app.post('/audit/v1/fixtures', (req, res, next) => {
     try { res.json(generateFixtures(req.body)); }
     catch (error) { next(error); }
+  });
+  app.post('/audit/v1/leagues', async (req,res,next) => {
+    try {res.status(201).json(await createLeague(pool,req.body));}catch(error){next(error);}
+  });
+  app.get('/audit/v1/standings/:league_id', async (req,res,next) => {
+    try {res.json(await getStandings(pool,req.params.league_id));}catch(error){next(error);}
   });
   app.use((_req, res) => res.status(404).json(errorBody('NOT_FOUND', 'Route not found')));
   app.use((error, _req, res, _next) => {

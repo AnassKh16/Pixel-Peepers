@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import pg from 'pg';
 
-const base = 'http://127.0.0.1:8080';
+const base = ((process.env.TEST_BASE_URL ?? 'http://127.0.0.1:8080') + '');
 const canonical = value => Array.isArray(value) ? `[${value.map(canonical).join(',')}]` : value !== null && typeof value === 'object' ? `{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}` : JSON.stringify(value);
 const request = (path, body) => fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 const get = match => fetch(`${base}/audit/v1/score/${encodeURIComponent(match)}`);

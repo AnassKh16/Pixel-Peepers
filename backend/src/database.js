@@ -1,5 +1,6 @@
 import { hash } from 'bcryptjs';
 import { sports, defaultStock } from './baseline.js';
+import { validateSport } from './sports.js';
 // A random bcrypt salt is generated on startup; reuse keeps repeat resets identical.
 const demoPasswordHash = hash('Nascon@26', 10);
 
@@ -16,8 +17,21 @@ CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY, email text UNIQUE NO
 CREATE TABLE IF NOT EXISTS app_state (key text PRIMARY KEY, value jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS matches (match_id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS events (event_id text PRIMARY KEY, data jsonb NOT NULL);
+ALTER TABLE events ADD COLUMN IF NOT EXISTS match_id text;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS sequence integer;
+ALTER TABLE events ALTER COLUMN match_id SET NOT NULL;
+ALTER TABLE events ALTER COLUMN sequence SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS events_match_sequence ON events(match_id, sequence);
+CREATE OR REPLACE FUNCTION reject_event_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'Events are append-only; append a compensation instead';
+END;
+$$;
+DROP TRIGGER IF EXISTS events_immutable ON events;
+CREATE TRIGGER events_immutable BEFORE UPDATE OR DELETE ON events FOR EACH ROW EXECUTE FUNCTION reject_event_mutation();
 CREATE TABLE IF NOT EXISTS rosters (roster_id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS orders (order_id text PRIMARY KEY, data jsonb NOT NULL);
+CREATE TABLE IF NOT EXISTS order_outbox (order_id text PRIMARY KEY REFERENCES orders(order_id), payload jsonb NOT NULL, published boolean NOT NULL DEFAULT false);
 CREATE TABLE IF NOT EXISTS offline_sync (device_id text NOT NULL, action_id text NOT NULL, data jsonb NOT NULL, PRIMARY KEY(device_id, action_id));
 `;
 
@@ -29,11 +43,11 @@ export async function resetDatabase(pool, redis, body = {}) {
     await client.query('BEGIN');
     // Serialize resets across callers and application instances.
     await client.query('SELECT pg_advisory_xact_lock(5505)');
-    await client.query('TRUNCATE offline_sync, orders, rosters, events, matches, users, variants, products, discounts, players, clubs, leagues, sports, tenants, app_state');
+    await client.query('TRUNCATE offline_sync, order_outbox, orders, rosters, events, matches, users, variants, products, discounts, players, clubs, leagues, sports, tenants, app_state');
     for (const [id, name] of [['tenant-alpha', 'Alpha Sports'], ['tenant-beta', 'Beta Athletics']]) {
       await client.query('INSERT INTO tenants VALUES ($1,$2)', [id, name]);
     }
-    for (const config of sports) await client.query('INSERT INTO sports VALUES ($1,$2)', [config.sport_id, config]);
+    for (const config of sports) await client.query('INSERT INTO sports VALUES ($1,$2)', [config.sport_id, validateSport(config)]);
     for (const [id, tenant] of [['alpha-1','alpha'], ['alpha-2','alpha'], ['beta-1','beta']]) {
       await client.query('INSERT INTO leagues(league_id,tenant_id) VALUES ($1,$2)', [`league-${id}`, `tenant-${tenant}`]);
       await client.query('INSERT INTO clubs VALUES ($1,$2)', [`club-${id}`, `tenant-${tenant}`]);

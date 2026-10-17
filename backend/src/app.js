@@ -4,9 +4,13 @@ import { resetDatabase } from './database.js';
 import { createTokenService, context } from './auth.js';
 import { findTarget, permits } from './policy.js';
 import { rateLimit } from './rate-limit.js';
+import { checkout, inventory, CheckoutError } from './checkout.js';
+import { DomainError } from './validation.js';
+import { createSport } from './sports.js';
+import { appendEvent, getScore } from './scoring.js';
 
 const errorBody = (code, message, details = {}) => ({error: {code, message, details}});
-export function createApp(pool, redis, tokens = createTokenService()) {
+export function createApp(pool, redis, tokens = createTokenService(), sign) {
   const app = express();
   app.disable('x-powered-by');
   const json = express.json({limit: '1mb', strict: false, type: () => true});
@@ -50,8 +54,33 @@ export function createApp(pool, redis, tokens = createTokenService()) {
     if (fields.length) return res.status(400).json(errorBody('VALIDATION_ERROR', 'Invalid reset parameters', {fields}));
     try { res.json(await resetDatabase(pool, redis, body)); } catch (error) { next(error); }
   });
+  app.post('/audit/v1/checkout', async (req, res, next) => {
+    try {
+      const result = await checkout(pool, redis, sign, req.body);
+      res.status(result.status).json(result.response);
+    } catch (error) { next(error); }
+  });
+  app.get('/audit/v1/inventory/:variant_id', async (req, res, next) => {
+    try { res.json(await inventory(pool, req.params.variant_id)); }
+    catch (error) { next(error); }
+  });
+  app.post('/audit/v1/sports', async (req, res, next) => {
+    try { res.status(201).json(await createSport(pool, req.body)); }
+    catch (error) { next(error); }
+  });
+  app.post('/audit/v1/events', async (req, res, next) => {
+    try {
+      const result = await appendEvent(pool, sign, req.body);
+      res.status(result.status).json(result.response);
+    } catch (error) { next(error); }
+  });
+  app.get('/audit/v1/score/:match_id', async (req, res, next) => {
+    try { res.json(await getScore(pool, req.params.match_id)); }
+    catch (error) { next(error); }
+  });
   app.use((_req, res) => res.status(404).json(errorBody('NOT_FOUND', 'Route not found')));
   app.use((error, _req, res, _next) => {
+    if (error instanceof CheckoutError || error instanceof DomainError) return res.status(error.status).json(errorBody(error.code, error.message, error.details));
     if (error.type === 'entity.too.large') return res.status(413).json(errorBody('PAYLOAD_TOO_LARGE', 'Body exceeds 1 MB'));
     if (error.type === 'entity.parse.failed' || error instanceof URIError || error.status === 400) return res.status(400).json(errorBody('VALIDATION_ERROR', 'Malformed request', {fields: ['body']}));
     console.error('Request failed:', error.message);

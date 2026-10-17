@@ -1,4 +1,4 @@
-Implements GET /health, POST /audit/v1/reset, the signature helper, and Section 5.13 security probes.
+Implements GET /health, POST /audit/v1/reset, HMAC signing, Section 5.6 sport configuration, Section 5.9 event sourcing, Section 5.12 checkout/inventory, and Section 5.13 security probes.
 
 From the repository root run `DAY1_SALT=<your-salt> docker compose up -d --build`.
 The API listens on 0.0.0.0:8080. Startup creates the tables and resets baseline data automatically.
@@ -15,3 +15,20 @@ POST /audit/v1/rbac-matrix returns HS256 JWTs valid for two hours and the exact 
 GET /api/v1/ping is subject to 100 requests per rolling 10 seconds per socket IP. Redis evaluates the window atomically; rejected calls include Retry-After in seconds. Forwarded IP headers are not trusted. /health and /audit/v1/* are exempt. Reset clears Redis state, including limiter windows.
 
 `sh run_tests.sh` runs the live tests against the running stack, including all 85 expected RBAC cells, additional ownership and authentication cases, bcrypt checks, and the 150-request limiter probe with an 11-second recovery check. Tests reset application data.
+
+Section 5.12 store API:
+- POST /audit/v1/checkout accepts order_id, customer_id, items [{variant_id, quantity}], optional discount_code, and payment {token}. Valid mock tokens: tok_success, tok_declined, tok_capture_fail.
+- GET /audit/v1/inventory/:variant_id returns variant_id, stock, and reserved.
+- WELCOME10 discounts the subtotal by 10%, rounded down in minor units.
+- New purchases return 201; identical successful replays return 200 with the stored response; changed bodies return DUPLICATE_ORDER_ID. Unknown fields are ignored.
+- Variants are locked in deterministic order in one PostgreSQL transaction. Authorization/capture failures roll the transaction back, releasing every reservation. Order ids are serialized independently so concurrent replays cannot create duplicate purchases.
+- Receipts contain an HMAC signature using the startup DAY1_SALT and a PDFKit PDF encoded as base64. Prices in the PDF use PKR major units with two decimal places.
+- Paid orders and their outbox records commit together. The server publishes order.status_changed events to the Redis stream order-status, using atomic deduplication and a background retry every second. Reset clears orders, outbox records, and Redis transient state.
+
+Run from C:/Pixel-Peepers: DAY1_SALT=<your-salt> docker compose up -d --build, then sh run_tests.sh. The full suite includes 20 real worker threads synchronized at a barrier and sending HTTP requests to the running stack, concurrent idempotency, opposite basket lock order, all checkout error codes, rollback, independent HMAC and PDF.js text verification, and Redis delivery. Latest verified result: 190 passed, 0 failed, 0 skipped; last-unit burst: 804 ms with one 201 and nineteen OUT_OF_STOCK responses.
+Sections 5.6 and 5.9:
+- POST /audit/v1/sports validates and stores the supplied sport config and returns 201 with sport_id, status, and config. All seeded sports pass through this same validator. Scoring consumes config fields and never selects behavior by a sport id or scoring-event name.
+- POST /audit/v1/events supports match_init, match_start, score, discipline, tiebreak_winner, match_end, and compensation. Payloads are signed in full, including extra payload keys. Successful event-id replays return the original response with HTTP 200; changed bodies return DUPLICATE_EVENT_ID.
+- GET /audit/v1/score/:match_id reads metadata, config, and the full ordered log in one consistent PostgreSQL snapshot, then rebuilds scores, status, outcome, and correction annotations. No score counters are stored. A completed match stays completed after compensation; a level score without an active required tie-break winner becomes undecided.
+- Match metadata is stored in matches.data as sport_id, home_team_id, away_team_id, and optional league_id. A fixture-created stream may start with no events and version zero. Event data stores the request and original response; dedicated match_id and sequence columns have a unique index. Appends serialize by event id and match id and lock the match row. Database triggers reject event UPDATE and DELETE; reset intentionally clears logs with TRUNCATE.
+- The full test script includes 60 sport-config subtests and 17 scoring subtests, with arbitrary mystery configurations for every model, model limits and their compensation, all rejection codes, completed-match corrections, independent UTF-8 HMAC verification with the supplied test salt, concurrent appends/replays, and immutable-event enforcement. Latest full run: 190 passed, 0 failed, 0 skipped.

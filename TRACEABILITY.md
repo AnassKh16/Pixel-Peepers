@@ -72,37 +72,37 @@ B3 unit checks; B3 database tests use SQL doubles. The existing
 
 ## Day 2 line-coverage area mapping
 
-`COVERAGE_DAY2.json` keeps all five percentage values `null` and
-`status: "not measured"`. Its `source_files` and `test_files` maps document
-the exact measurement groups and their existing test entry points. These are
-test mappings, not measured percentages or a claim that >=85% has been achieved.
-The groups below follow the user's explicit area assignment; for example,
-`privacy.js` and `day2-b3-routes.js` remain requirement-traced but are not
-silently added to an area denominator.
+`COVERAGE_DAY2.json` contains measured percentages with `status: "measured"`
+and per-area `line_counts` (`covered` / `total`). Results were supplied by
+Laptop 1 from its 507-test run, using merged server-side and test-process
+coverage with the same tool as Day 1. These results were recorded here; the
+suite was not re-run on Laptop 2. All five measured areas exceed the Section
+7.2 minimum of 85% line coverage.
 
-| Area | Exact source files for measured line coverage | Existing tests / acceptance probes | Measured percentage |
-|---|---|---|---|
-| streaming | `backend/src/streaming.js`; `backend/src/score-streams.js`; `backend/src/score-view.js` | `backend/test/day2-b1.test.js`; `backend/test/day2-b2.test.js`; `tests/selenium/test_guest_grid.py`; `tests/appium/test_mobile_deeplink.py` | null — not measured |
-| costream | `backend/src/costream.js` | `backend/test/day2-b1.test.js`; `backend/test/day2-b2.test.js`; `tests/appium/test_cross_surface.py` | null — not measured |
-| qr_guest | `backend/src/qr.js`; `backend/src/guest-boundary.js`; `backend/src/guest-cart.js`; `backend/src/public-api.js`; `backend/src/public-data.js` | `backend/test/day2-b2.test.js`; `tests/selenium/test_guest_grid.py`; `tests/appium/test_mobile_deeplink.py`; `tests/k6_load.js` | null — not measured |
-| moderation_dlq | `backend/src/moderation.js`; `backend/src/dlq.js`; `backend/src/chat.js`; `backend/src/chat-filter.js` | `backend/test/day2-b3.test.js`; `backend/test/day2-b2.test.js`; `tests/appium/test_cross_surface.py`; `tests/k6_load.js` | null — not measured |
-| observability | `backend/src/metrics.js` | `backend/test/day2-b3.test.js` | null — not measured |
+The `source_files` and `test_files` maps retain the exact measurement groups
+and existing test entry points. The groups follow the user's explicit area
+assignment: `privacy.js` and `day2-b3-routes.js` remain requirement-traced but
+are not silently added to an area denominator.
 
-Laptop 1 will measure these groups after B3 wiring, using the same merged
-server-side and test-process V8-to-Istanbul coverage method as Day 1. Aggregate
-covered and total instrumented lines across each area's listed source files,
-then compute `floor(covered * 10000 / total) / 100`; do not average individual
-file percentages. Selenium/Appium/k6 entries are acceptance probes and do not
-themselves establish backend line coverage unless the serving process is
-instrumented and its coverage is merged.
+| Area | Exact source files for measured line coverage | Existing tests / acceptance probes | Measured percentage | Covered / total lines |
+|---|---|---|---|---|
+| streaming | `backend/src/streaming.js`; `backend/src/score-streams.js`; `backend/src/score-view.js` | `backend/test/day2-b1.test.js`; `backend/test/day2-b2.test.js`; `tests/selenium/test_guest_grid.py`; `tests/appium/test_mobile_deeplink.py` | 96.68% | 204 / 211 |
+| costream | `backend/src/costream.js` | `backend/test/day2-b1.test.js`; `backend/test/day2-b2.test.js`; `tests/appium/test_cross_surface.py` | 100% | 48 / 48 |
+| qr_guest | `backend/src/qr.js`; `backend/src/guest-boundary.js`; `backend/src/guest-cart.js`; `backend/src/public-api.js`; `backend/src/public-data.js` | `backend/test/day2-b2.test.js`; `tests/selenium/test_guest_grid.py`; `tests/appium/test_mobile_deeplink.py`; `tests/k6_load.js` | 98.88% | 265 / 268 |
+| moderation_dlq | `backend/src/moderation.js`; `backend/src/dlq.js`; `backend/src/chat.js`; `backend/src/chat-filter.js` | `backend/test/day2-b3.test.js`; `backend/test/day2-b2.test.js`; `tests/appium/test_cross_surface.py`; `tests/k6_load.js` | 99.43% | 176 / 177 |
+| observability | `backend/src/metrics.js` | `backend/test/day2-b3.test.js` | 100% | 21 / 21 |
 
-The current `backend/scripts/coverage-areas.json` and
-`backend/scripts/run-tests.mjs` still generate the Day 1 areas in
-`COVERAGE.json`; their existing output cannot populate Day 2 percentages.
-Those tools are outside this two-file edit scope. Replace the five nulls only
-with actual measured results. Before submission, Laptop 1 must emit the flat
-five-number Section 7.2 artifact from those results and keep mapping/status
-metadata in this traceability document if the grader requires the exact schema.
+Percentages use aggregate covered/total instrumented lines for each area's
+listed source files, floored to two decimal places; individual file
+percentages are not averaged. Selenium/Appium/k6 entries remain acceptance
+probes: measured backend line coverage does not by itself establish live
+media, load, accessibility, device or latency acceptance.
+
+The previous missing-measurement gap is closed by Laptop 1's supplied results.
+Keep the five numeric values and exact source groups aligned when regenerating
+coverage. If submission requires only the flat five-number Section 7.2 schema,
+retain this document's mappings/counts and emit that flat artifact from the
+same measured values. No changes to coverage tooling were made in this edit.
 
 ## Day 2 privacy integration decision (ADR-013)
 

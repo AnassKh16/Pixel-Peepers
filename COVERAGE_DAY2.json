@@ -1,10 +1,10 @@
 {
-  "streaming": null,
-  "costream": null,
-  "qr_guest": null,
-  "moderation_dlq": null,
-  "observability": null,
-  "status": "not measured",
+  "streaming": 96.68,
+  "costream": 100,
+  "qr_guest": 98.88,
+  "moderation_dlq": 99.43,
+  "observability": 100,
+  "status": "measured",
   "source_files": {
     "streaming": [
       "backend/src/streaming.js",
@@ -58,6 +58,32 @@
     "observability": [
       "backend/test/day2-b3.test.js"
     ]
+  },
+  "line_counts": {
+    "streaming": {
+      "total": 211,
+      "covered": 204
+    },
+    "costream": {
+      "total": 48,
+      "covered": 48
+    },
+    "qr_guest": {
+      "total": 268,
+      "covered": 265
+    },
+    "moderation_dlq": {
+      "total": 177,
+      "covered": 176
+    },
+    "observability": {
+      "total": 21,
+      "covered": 21
+    }
+  },
+  "measurement": {
+    "source": "Laptop 1; measured results supplied by the user",
+    "test_run_count": 507,
+    "method": "Merged server-side and test-process line coverage; same tool as Day 1"
   }
 }
-

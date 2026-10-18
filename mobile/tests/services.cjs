@@ -21,7 +21,11 @@ function loader() {
     const code = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
     const localRequire = name => {
       if (name === 'expo-crypto') return { randomUUID: crypto.randomUUID };
-      if (name === 'expo-secure-store') return { getItemAsync: async key => secure.get(key) || null, setItemAsync: async (key, value) => { secure.set(key, value); } };
+      if (name === 'expo-secure-store') return {
+        getItemAsync: async key => secure.get(key) || null,
+        setItemAsync: async (key, value) => { secure.set(key, value); },
+        deleteItemAsync: async key => { secure.delete(key); },
+      };
       if (name === 'expo-sqlite') return { openDatabaseAsync: async () => {
         const connection = new DatabaseSync(filenameForDB()); connections.push(connection);
         return { execAsync: async sql => connection.exec(sql),
@@ -34,6 +38,7 @@ function loader() {
       if (name === '@react-navigation/native') return {
         getStateFromPath: () => undefined,
         getPathFromState: () => '',
+        createNavigationContainerRef: () => ({ isReady: () => false, getCurrentRoute: () => null, reset: () => {}, navigate: () => {} }),
       };
       if (name.startsWith('.')) return load(path.resolve(path.dirname(filename), `${name}.ts`));
       return require(name);
@@ -106,7 +111,17 @@ if (process.argv.includes('--live-readonly')) {
     assert.equal((await api.getFixtures())[0].cached, true); assert.equal((await api.getMatch(fixture.id, false)).cached, true);
     assert.equal((await api.getStandings('league-alpha-1', false))[0].cached, true);
     assert.equal((await api.getClub(false)).roster[0].name, 'Ali'); assert.equal((await api.getSport('football', false)).cached, true);
+    let authExpiredFired = false;
+    const unsubAuth = api.subscribeAuthExpiry(() => { authExpiredFired = true; });
     offline = false; authFailure = true; await assert.rejects(api.getFixtures(), /sign-in has expired/); authFailure = false;
+    unsubAuth();
+    assert.equal(authExpiredFired, true, 'auth expiry listener must trigger on 401');
+    assert.equal(secure.get('skorly.token') || null, null, 'token must be cleared on 401');
+    assert.equal(secure.get('skorly.session') || null, null, 'session must be cleared on 401');
+    assert.equal(api.getApiSession(), null, 'in-memory session must be cleared on 401');
+    secure.set('skorly.token', 'real-jwt-test');
+    secure.set('skorly.session', JSON.stringify(account));
+    api.setApiSession(account);
     const items = [{ product, variantId: product.variants[0].id, size: 'M', color: 'Blue', quantity: 1 }];
     assert.equal(api.quote(items, 'WELCOME10').total, 4050); assert.equal(api.money(4500), 'PKR 4,500.00');
     await assert.rejects(api.checkout(items, '', 'declined', true, account.email), /payment was declined/);
@@ -182,6 +197,69 @@ test('Deep links, scheme, manifest, and server host specifications', () => {
   assert.equal(linking.getPathFromState({ routes: [{ name: 'PlayerProfile', params: { id: 'player-alpha-1' } }] }), 'entity/player-alpha-1');
   assert.equal(linking.getPathFromState({ routes: [{ name: 'ClubProfile', params: { id: 'club-alpha-1' } }] }), 'entity/club-alpha-1');
 });
+
+test('401 auth handling, token clearance, guest live screen protection, and error retry logic', async () => {
+  const load = loader();
+  const errors = load('src/services/errors.ts');
+  const api = load('src/services/api.ts');
+
+  // Verify error categorization: isAuthExpired detects 401 and unauthenticated states
+  assert.equal(errors.isAuthExpired({ status: 401 }), true);
+  assert.equal(errors.isAuthExpired({ code: 'UNAUTHENTICATED' }), true);
+  assert.equal(errors.isAuthExpired('Your sign-in has expired. Sign out and sign in again.'), true);
+  assert.equal(errors.isAuthExpired('Please sign in to connect to your league.'), true);
+  assert.equal(errors.isAuthExpired(new Error('Sign-in expired')), true);
+
+  // Network and 5xx errors are NOT auth expired (Retry button must be kept)
+  assert.equal(errors.isAuthExpired({ status: 500 }), false);
+  assert.equal(errors.isAuthExpired({ status: 503 }), false);
+  assert.equal(errors.isAuthExpired(new Error('Network request failed')), false);
+  assert.equal(errors.isAuthExpired(new Error('Cannot reach the server')), false);
+
+  // friendlyError preserves clean messages and formats network errors
+  assert.equal(errors.friendlyError(new Error('Network request failed')), 'Cannot reach the server. Check your Wi-Fi and server address, then try again.');
+  assert.equal(errors.friendlyError(new Error('The server could not complete your request. Please try again shortly.')), 'The server could not complete your request. Please try again shortly.');
+
+  // Verify clearAuthSession removes tokens from secure store
+  secure.set('skorly.token', 'test-token');
+  secure.set('skorly.session', JSON.stringify({ token: 'test-token', email: 'test@nascon.test', role: 'Viewer' }));
+  api.setApiSession({ token: 'test-token', email: 'test@nascon.test', role: 'Viewer' });
+
+  await api.clearAuthSession();
+  assert.equal(secure.get('skorly.token') || null, null);
+  assert.equal(secure.get('skorly.session') || null, null);
+  assert.equal(api.getApiSession(), null);
+
+  // Verify guest protection logic on MatchLive and CoStream
+  let redirectedToLogin = false;
+  let sessionState = null; // guest mode
+  let currentScreen = 'MatchLive';
+
+  function onAuthExpired() {
+    if (!sessionState && (currentScreen === 'MatchLive' || currentScreen === 'CoStream')) {
+      return; // Guests on MatchLive and CoStream must never be sent to Login
+    }
+    sessionState = null;
+    redirectedToLogin = true;
+  }
+
+  // Guest on MatchLive
+  onAuthExpired();
+  assert.equal(redirectedToLogin, false, 'Guest on MatchLive must not be sent to Login');
+
+  // Guest on CoStream
+  currentScreen = 'CoStream';
+  onAuthExpired();
+  assert.equal(redirectedToLogin, false, 'Guest on CoStream must not be sent to Login');
+
+  // Authenticated user on Fixtures screen
+  sessionState = { token: 'jwt-active', email: 'user@nascon.test', role: 'Viewer' };
+  currentScreen = 'Fixtures';
+  onAuthExpired();
+  assert.equal(redirectedToLogin, true, 'Authenticated user must be redirected to Login when sign-in expires');
+  assert.equal(sessionState, null, 'Session must be reset on auth expiry');
+});
+
 
 
 

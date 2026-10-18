@@ -9,6 +9,28 @@ export type User = { id: string; email: string; tenant_id: string; club_id: stri
 export type Session = { token: string; email: string; role: Role; user?: User; server?: string };
 let session: Session | null = null;
 export function setApiSession(value: Session | null) { session = value; }
+export function getApiSession(): Session | null { return session; }
+
+export type AuthExpiryListener = () => void;
+const authExpiryListeners = new Set<AuthExpiryListener>();
+export function subscribeAuthExpiry(listener: AuthExpiryListener) {
+  authExpiryListeners.add(listener);
+  return () => { authExpiryListeners.delete(listener); };
+}
+export async function clearAuthSession() {
+  try {
+    await SecureStore.deleteItemAsync('skorly.token');
+    await SecureStore.deleteItemAsync('skorly.session');
+  } catch {}
+  setApiSession(null);
+}
+export function handleAuthExpired() {
+  void clearAuthSession();
+  authExpiryListeners.forEach(listener => {
+    try { listener(); } catch {}
+  });
+}
+
 const roleNames: Record<string, Role> = { super_admin: 'Super Admin', league_organizer: 'League Organizer', club_manager: 'Club Manager', player: 'Player', viewer: 'Viewer' };
 const listeners = new Set<(unreachable: boolean) => void>();
 export function subscribeApiStatus(listener: (unreachable: boolean) => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }
@@ -32,6 +54,7 @@ export class ApiError extends Error {
 }
 function errorMessage(status: number, error?: { code?: string; message?: string }) {
   if (error?.code && messages[error.code]) return messages[error.code];
+  if (status === 401) return 'Your sign-in has expired. Sign out and sign in again.';
   if (status === 402) return 'Your payment could not be completed. Please try another payment option.';
   if (status === 409) return 'This item or action has changed. Refresh the information and try again.';
   if (status === 429) return 'Too many requests. Wait a few seconds and try again.';
@@ -44,8 +67,16 @@ async function request<T>(path: string, body?: unknown, publicRoute = false): Pr
   const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 10000);
   try {
     const token = publicRoute ? null : await SecureStore.getItemAsync('skorly.token');
-    if (!publicRoute && (!token || token.startsWith('mock-'))) throw new ApiError('Please sign in to connect to your league.', 401);
-    if (!publicRoute && session?.server && session.server !== BASE_URL) throw new ApiError('The server address changed. Sign out and sign in again.', 401);
+    if (!publicRoute && (!token || token.startsWith('mock-'))) {
+      await clearAuthSession();
+      handleAuthExpired();
+      throw new ApiError('Please sign in to connect to your league.', 401);
+    }
+    if (!publicRoute && session?.server && session.server !== BASE_URL) {
+      await clearAuthSession();
+      handleAuthExpired();
+      throw new ApiError('The server address changed. Sign out and sign in again.', 401);
+    }
     const response = await fetch(`${BASE_URL.replace(/\/+$/, '').replace(/\/api\/v1$/, '')}/api/v1${path}`, {
       method: body === undefined ? 'GET' : 'POST', headers: { Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}), signal: controller.signal,
@@ -55,7 +86,12 @@ async function request<T>(path: string, body?: unknown, publicRoute = false): Pr
     try { value = await response.json(); } catch { throw new ApiError('The server returned an unreadable response. Please try again.', response.status); }
     if (!response.ok) {
       const error = (value as { error?: { code?: string; message?: string } })?.error;
-      throw new ApiError(errorMessage(response.status, error), response.status, error?.code);
+      const apiErr = new ApiError(errorMessage(response.status, error), response.status, error?.code);
+      if (response.status === 401 && !publicRoute) {
+        await clearAuthSession();
+        handleAuthExpired();
+      }
+      throw apiErr;
     }
     return value as T;
   } catch (error) {

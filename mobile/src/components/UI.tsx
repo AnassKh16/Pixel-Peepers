@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, tenant } from '../theme';
 import { Button } from './Button';
 import { useApp } from '../providers/AppProvider';
-import { friendlyError } from '../services/errors';
+import { friendlyError, isAuthExpired } from '../services/errors';
 export type IconName = React.ComponentProps<typeof Ionicons>['name'];
 export function Icon({ name, color = colors.forest, size = 22 }: { name: IconName; color?: string; size?: number }) { return <Ionicons name={name} color={color} size={size} accessible={false} />; }
 export function Body({ children, strong = false }: React.PropsWithChildren<{ strong?: boolean }>) { return <Text style={[ui.body, strong && { fontFamily: 'Inter_600SemiBold' }]}>{children}</Text>; }
@@ -33,12 +33,15 @@ export function Empty({ message }: { message: string }) { return <Card><Icon nam
 export function Loading() { return <View accessibilityLabel="Loading content" accessibilityRole="progressbar" style={{ gap: 14 }}><ActivityIndicator color={colors.forest} />{[0, 1, 2].map(i => <View key={i} style={{ height: 84, backgroundColor: colors.sand, borderRadius: 20 }} />)}</View>; }
 export function useResource<T>(loader: () => Promise<T>, dependencies: unknown[]) {
   const [data, setData] = useState<T>(); const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const [retry, setRetry] = useState(0);
-  useEffect(() => { let active = true; setLoading(true); setError(''); loader().then(value => { if (active) setData(value); }).catch(e => { if (active) setError(friendlyError(e, 'Could not load this information. Please try again.')); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [...dependencies, retry]);
+  useEffect(() => { let active = true; setLoading(true); setError(''); loader().then(value => { if (active) setData(value); }).catch(e => { if (active) setError(isAuthExpired(e) ? (e instanceof Error ? e.message : 'Your sign-in has expired. Sign out and sign in again.') : friendlyError(e, 'Could not load this information. Please try again.')); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [...dependencies, retry]);
   return { data, error, loading, hasData: data !== undefined, reload: () => setRetry(value => value + 1) };
 }
 export function Resource({ resource, children, preserveData = false }: React.PropsWithChildren<{ preserveData?: boolean; resource: { loading: boolean; error: string; hasData?: boolean; reload: () => void } }>) {
   if (resource.loading && !(preserveData && resource.hasData)) return <Loading />;
-  if (resource.error) return <Card><Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={ui.body}>{friendlyError(resource.error)}</Text><Button title="Retry" onPress={resource.reload} /></Card>;
+  if (resource.error) {
+    if (isAuthExpired(resource.error)) return null;
+    return <Card><Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={ui.body}>{friendlyError(resource.error)}</Text><Button title="Retry" onPress={resource.reload} /></Card>;
+  }
   return <>{resource.loading && <ActivityIndicator accessibilityLabel="Refreshing content" color={colors.forest} />}{children}</>;
 }
 export function SyncPill({ onPress }: { onPress: () => void }) {

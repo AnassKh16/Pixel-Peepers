@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Badge, Card, Icon, Title } from '../components/UI';
+import { Badge, Body, Card, Icon, Title } from '../components/UI';
 import { Button } from '../components/Button';
 import { BASE_URL, getServerHost } from '../config';
 import { colors } from '../theme';
@@ -51,6 +51,7 @@ export function CoStreamScreen({ route, navigation }: NativeStackScreenProps<Rou
   const [participants] = useState<Participant[]>(initialParticipants);
   const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
   const [inputText, setInputText] = useState('');
+  const [error] = useState<string | null>(null);
 
   function handleSendMessage() {
     const trimmed = inputText.trim();
@@ -74,6 +75,7 @@ export function CoStreamScreen({ route, navigation }: NativeStackScreenProps<Rou
           <Badge label="CO-STREAM" icon="people-outline" live />
           <Badge label="layout grid_4" icon="grid-outline" />
         </View>
+        {error && <Card><Body>{error}</Body></Card>}
 
         {/* 2x2 grid of 4 participant tiles (layout grid_4) */}
         <Title>Live Participants (layout grid_4)</Title>

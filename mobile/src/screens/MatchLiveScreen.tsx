@@ -83,7 +83,11 @@ export function MatchLiveScreen({ route, navigation }: NativeStackScreenProps<Ro
         setError(null);
         setLastRefreshed(new Date().toLocaleTimeString());
       } else {
-        setError(`Status ${response.status}`);
+        if (response.status === 401 || response.status === 403) {
+          setError('Guest access: read-only live preview');
+        } else {
+          setError(`Status ${response.status}`);
+        }
       }
     } catch {
       setError('Live score feed unreachable');

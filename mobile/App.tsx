@@ -67,7 +67,7 @@ export default function App() {
   if (!ready || !fontsLoaded) return <View style={s.center}><ActivityIndicator accessibilityLabel="Loading Skorly" color={colors.forest} /></View>;
   const navigationTheme = isDark ? DarkTheme : DefaultTheme;
   return <SafeAreaProvider><StatusBar style={isDark ? 'light' : 'dark'} /><NavigationContainer ref={navigationRef} linking={linking} theme={{ ...navigationTheme, colors: { ...navigationTheme.colors, primary: colors.forest, background: colors.cream, card: colors.cream, text: colors.forest, border: colors.border, notification: isDark ? colors.coral : navigationTheme.colors.notification } }}>
-    {session ? <AppProvider key={session.email} session={session}><AppNavigator onLogout={logout} /></AppProvider> : <Auth.Navigator initialRouteName="Login" screenOptions={{ headerTitleStyle: { fontFamily: 'Sora_700Bold' }, contentStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest }}>
+    {session ? <AppProvider key={session.email} session={session}><AppNavigator onLogout={logout} /></AppProvider> : <Auth.Navigator initialRouteName="Login" screenOptions={{ animation: 'slide_from_right', headerTitleStyle: { fontFamily: 'Sora_700Bold' }, contentStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest }}>
       <Auth.Screen name="Login" options={{ title: 'Welcome to Skorly' }}>{({ navigation }) => <LoginScreen onSettings={() => navigation.navigate('Settings')} onSignedIn={setSession} />}</Auth.Screen>
       <Auth.Screen name="Settings">{() => <SettingsScreen />}</Auth.Screen>
       <Auth.Screen name="MatchLive" component={MatchLiveScreen} options={{ title: 'Live Match' }} />

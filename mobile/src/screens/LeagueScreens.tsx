@@ -51,7 +51,7 @@ export function MatchDetailScreen({ route, navigation }: NativeStackScreenProps<
       <Body strong>{match.home}</Body><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} accessibilityLabel={`${match.home} ${match.homeScore}, ${match.away} ${match.awayScore}`} style={ui.score}>{match.homeScore} : {match.awayScore}</Text><Body strong>{match.away}</Body>
       <Body>{match.sport} · {match.cached || !online ? 'Saved score' : match.status === 'Live' ? 'In progress' : match.status === 'Upcoming' ? 'Not started' : 'Full time'}</Body>
       <Body>Last updated {match.updatedAt ? new Date(match.updatedAt).toLocaleTimeString() : 'not available'}{match.cached || !online ? ' · Offline - cached' : ''}</Body>
-    </Card><Title>Match timeline</Title>
+    </Card><Button title="Watch live" onPress={() => navigation.navigate('MatchLive', { id: match.id })} /><Button title="Join co-stream" onPress={() => navigation.navigate('CoStream', { id: 'cs-session-101' })} /><Title>Match timeline</Title>
     {!match.events.length && <Empty message="The story starts at kick-off. No events yet." />}
     {match.events.map(event => <Card key={event.id}><Badge label={`Event ${event.minute}`} icon={event.compensates ? 'arrow-undo-outline' : 'football-outline'} /><Body>{event.description}</Body></Card>)}
     {queued.map(item => <Card key={item.action_id}><Badge label="Pending" icon="time-outline" /><Body>{item.payload.type === 'compensation' ? 'Undo event' : 'Score event'}</Body></Card>)}

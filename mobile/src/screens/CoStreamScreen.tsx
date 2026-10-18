@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     borderColor: colors.subtleBorder,
     gap: 6,
   },
-  tileHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  tileHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 6 },
   tileMockVideo: {
     height: 76,
     backgroundColor: colors.tileVideo,

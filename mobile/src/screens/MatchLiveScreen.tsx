@@ -137,7 +137,6 @@ export function MatchLiveScreen({ route, navigation }: NativeStackScreenProps<Ro
           <View style={styles.scoreRow}>
             <View style={styles.teamCol}>
               <Text style={styles.teamTitle} accessibilityLabel="home-team-name">{homeTeam}</Text>
-              {score?.home?.team_id && <Text style={styles.teamIdText}>{score.home.team_id}</Text>}
             </View>
             <View style={styles.scoreCenter}>
               <Text
@@ -150,7 +149,6 @@ export function MatchLiveScreen({ route, navigation }: NativeStackScreenProps<Ro
             </View>
             <View style={styles.teamCol}>
               <Text style={styles.teamTitle} accessibilityLabel="away-team-name">{awayTeam}</Text>
-              {score?.away?.team_id && <Text style={styles.teamIdText}>{score.away.team_id}</Text>}
             </View>
           </View>
           {error && <Text style={styles.errorText}>{error}</Text>}

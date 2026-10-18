@@ -42,10 +42,10 @@ function Profile({ navigation, logout }: { navigation: Pick<NativeStackNavigatio
 }
 function Home({ navigation, logout }: NativeStackScreenProps<Routes, 'Home'> & { logout: () => void }) {
   const insets = useSafeAreaInsets(); const { fontScale } = useWindowDimensions();
-  return <Tab.Navigator screenOptions={({ route }) => ({ headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 18 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
+  return <Tab.Navigator screenOptions={({ route }) => ({ animation: 'shift', headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 18 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
     headerRight: () => <View style={{ marginRight: 8 }}><SyncPill onPress={() => navigation.navigate('SyncStatus')} /></View>,
     tabBarStyle: { backgroundColor: colors.tabBackground, height: Math.max(62, 44 + 18 * fontScale) + insets.bottom, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 8) }, tabBarActiveBackgroundColor: colors.tabActiveBackground, tabBarActiveTintColor: colors.tabActive, tabBarInactiveTintColor: colors.tabInactive,
-    tabBarItemStyle: { minHeight: 48 }, tabBarLabelPosition: 'below-icon',
+    tabBarItemStyle: { minHeight: 48, borderRadius: 18, marginHorizontal: 6, marginBottom: 2, overflow: 'hidden' }, tabBarLabelPosition: 'below-icon',
     tabBarLabel: ({ children, color }) => <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color, fontFamily: 'Inter_500Medium', fontSize: 11, lineHeight: 14, textAlign: 'center', maxWidth: '100%' }}>{children}</Text>,
     tabBarAccessibilityLabel: `${route.name} tab`, tabBarIcon: ({ focused }) => <Icon name={tabIcons[route.name]} color={focused ? colors.tabActive : colors.tabInactive} />,
   })}>
@@ -66,7 +66,7 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
     Alert.alert('Sign out?', pending.length ? 'Pending actions stay saved for this account on this server. Sign back in to sync them.' : 'Your saved league data stays on this device.',
       [{ text: 'Cancel', style: 'cancel' }, { text: 'Sign out', onPress: () => { void onLogout().catch(() => Alert.alert('Could not sign out', 'Please try again.')); } }]);
   }
-  return <View style={{ flex: 1 }}><Stack.Navigator screenOptions={({ navigation }) => ({ headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 18 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
+  return <View style={{ flex: 1 }}><Stack.Navigator screenOptions={({ navigation }) => ({ animation: 'slide_from_right', headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 18 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
     contentStyle: { backgroundColor: colors.cream }, headerBackButtonDisplayMode: 'minimal', headerRight: () => <SyncPill onPress={() => navigation.navigate('SyncStatus')} /> })}>
     <Stack.Screen name="Home" options={{ headerShown: false }}>{props => <Home {...props} logout={logout} />}</Stack.Screen>
     <Stack.Screen name="MatchDetail" component={MatchDetailScreen} options={{ title: 'Match' }} />

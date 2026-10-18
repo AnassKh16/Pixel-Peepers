@@ -11,5 +11,5 @@ export const Input = forwardRef<React.ComponentRef<typeof TextInput>, TextInputP
 });
 const styles = StyleSheet.create({
   input: { minHeight: 54, borderRadius: 16, padding: 16, backgroundColor: colors.sand,
-    color: colors.forest, fontFamily: 'Inter_400Regular', fontSize: 16, borderWidth: 2, borderColor: colors.sand },
+    color: colors.forest, fontFamily: 'Inter_400Regular', fontSize: 16, borderWidth: 2, borderColor: colors.border },
 });

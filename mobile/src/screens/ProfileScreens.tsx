@@ -21,7 +21,7 @@ export function PlayerProfileScreen({ route, navigation }: NativeStackScreenProp
         <Card dark>
           <View style={styles.avatarRow}>
             <View style={styles.avatarCircle}>
-              <Icon name="person" size={36} color={colors.cream} />
+              <Icon name="person" size={36} color={colors.panelText} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.heroName} accessibilityLabel="player-name">{playerName}</Text>
@@ -83,11 +83,11 @@ export function ClubProfileScreen({ route, navigation }: NativeStackScreenProps<
         </View>
 
         <Card dark>
-          <Text style={{ color: colors.coral, fontFamily: 'Sora_800ExtraBold', fontSize: 44 }}>
+          <Text style={{ color: colors.accentText, fontFamily: 'Sora_800ExtraBold', fontSize: 44 }}>
             {clubName.slice(0, 2).toUpperCase()}
           </Text>
-          <Text style={[ui.title, { color: colors.cream }]} accessibilityLabel="club-name">{clubName}</Text>
-          <Text style={[ui.body, { color: colors.cream }]}>Islamabad Sports Complex · ID: {clubId}</Text>
+          <Text style={[ui.title, { color: colors.panelText }]} accessibilityLabel="club-name">{clubName}</Text>
+          <Text style={[ui.body, { color: colors.panelText }]}>Islamabad Sports Complex · ID: {clubId}</Text>
         </Card>
 
         <Title>Active Roster</Title>
@@ -134,10 +134,10 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: colors.forest,
+    backgroundColor: colors.panel,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroName: { color: colors.cream, fontFamily: 'Sora_700Bold', fontSize: 18 },
-  heroSub: { color: colors.sand, fontFamily: 'Inter_400Regular', fontSize: 12, marginBottom: 4 },
+  heroName: { color: colors.panelText, fontFamily: 'Sora_700Bold', fontSize: 18 },
+  heroSub: { color: colors.panelMuted, fontFamily: 'Inter_400Regular', fontSize: 12, marginBottom: 4 },
 });

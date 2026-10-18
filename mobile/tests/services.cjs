@@ -13,13 +13,14 @@ fs.mkdirSync(testFolder, { recursive: true });
 const filename = path.join(testFolder, `services-${process.pid}.db`);
 const connections = [];
 const secure = new Map();
-function loader() {
+function loader(colorScheme = 'light') {
   const modules = new Map();
   function load(filename) {
     if (modules.has(filename)) return modules.get(filename).exports;
     const module = { exports: {} }; modules.set(filename, module);
     const code = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
     const localRequire = name => {
+      if (name === 'react-native') return { Appearance: { getColorScheme: () => colorScheme } };
       if (name === 'expo-crypto') return { randomUUID: crypto.randomUUID };
       if (name === 'expo-secure-store') return {
         getItemAsync: async key => secure.get(key) || null,
@@ -180,6 +181,13 @@ test('Deep links, scheme, manifest, and server host specifications', () => {
   assert.equal(streamRes.routes[0].name, 'CoStream');
   assert.equal(streamRes.routes[0].params.id, 'cs-session-101');
 
+  const entityStreamRes = linking.getStateFromPath('nascon://entity/cs-session-101');
+  assert.equal(entityStreamRes.routes[0].name, 'CoStream');
+  assert.equal(entityStreamRes.routes[0].params.id, 'cs-session-101');
+  const plainEntityStreamRes = linking.getStateFromPath('entity/cs-session-101');
+  assert.equal(plainEntityStreamRes.routes[0].name, 'CoStream');
+  assert.equal(plainEntityStreamRes.routes[0].params.id, 'cs-session-101');
+
   const streamResPlain = linking.getStateFromPath('stream/cs-session-101');
   assert.equal(streamResPlain.routes[0].name, 'CoStream');
   assert.equal(streamResPlain.routes[0].params.id, 'cs-session-101');
@@ -263,3 +271,28 @@ test('401 auth handling, token clearance, guest live screen protection, and erro
 
 
 
+test('Appearance palettes preserve light colours and readable dark red controls', () => {
+  const light = loader('light')('src/theme.ts');
+  const dark = loader('dark')('src/theme.ts');
+  assert.equal(light.colors, light.lightColors);
+  assert.equal(dark.colors, dark.darkColors);
+  assert.deepEqual(Object.keys(light.lightColors).sort(), Object.keys(dark.darkColors).sort());
+  assert.equal(light.colors.cream, '#FBF6EC');
+  assert.equal(light.colors.sand, '#EFE6D3');
+  assert.equal(light.colors.forest, '#16261F');
+  assert.equal(light.colors.coral, '#FF6A4D');
+  assert.equal(dark.colors.cream, '#120B04');
+  assert.equal(dark.colors.card, '#1E1708');
+  assert.equal(dark.colors.border, '#2A2210');
+  assert.equal(dark.colors.coral, '#A8120F');
+  const luminance = hex => {
+    const channels = hex.slice(1).match(/../g).map(value => parseInt(value, 16) / 255).map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  };
+  const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
+  assert.ok(contrast(dark.colors.onPrimary, dark.colors.coral) >= 4.5);
+  assert.ok(contrast(light.colors.onPrimary, light.colors.coral) >= 4.5);
+  assert.ok(contrast(dark.colors.forest, dark.colors.card) >= 4.5);
+  assert.ok(contrast(dark.colors.moss, dark.colors.card) >= 4.5);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8')).expo.userInterfaceStyle, 'automatic');
+});

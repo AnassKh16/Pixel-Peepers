@@ -27,12 +27,12 @@ function Profile({ navigation, logout }: { navigation: Pick<NativeStackNavigatio
   const secondaryAction = (title: string, onPress: () => void) => <Pressable
     accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
     style={({ pressed }) => ({ minHeight: 48, borderWidth: 1, borderColor: colors.forest,
-      borderRadius: 30, backgroundColor: 'transparent', paddingVertical: 10, paddingHorizontal: 16,
+      borderRadius: 30, backgroundColor: colors.transparent, paddingVertical: 10, paddingHorizontal: 16,
       alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1,
       transform: [{ scale: pressed ? 0.97 : 1 }] })}>
     <Text style={{ color: colors.forest, fontFamily: 'Inter_600SemiBold', fontSize: 15, textAlign: 'center' }}>{title}</Text>
   </Pressable>;
-  return <Page><Title>Profile</Title><Card><Body strong>{session.email}</Body><Badge label={session.role} icon="person-outline" /></Card>
+  return <Page><Card><Body strong>{session.email}</Body><Badge label={session.role} icon="person-outline" /></Card>
     {['Club Manager', 'Super Admin'].includes(session.role) && secondaryAction('Manage roster', () => navigation.navigate('Roster'))}
     {['League Organizer', 'Super Admin'].includes(session.role) && secondaryAction('Scoring entry', () => navigation.navigate('Scoring', {}))}
     {secondaryAction('Settings', () => navigation.navigate('Settings'))}<Button title="Sync Status" onPress={() => navigation.navigate('SyncStatus')} />
@@ -44,10 +44,10 @@ function Home({ navigation, logout }: NativeStackScreenProps<Routes, 'Home'> & {
   const insets = useSafeAreaInsets(); const { fontScale } = useWindowDimensions();
   return <Tab.Navigator screenOptions={({ route }) => ({ headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 18 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
     headerRight: () => <View style={{ marginRight: 8 }}><SyncPill onPress={() => navigation.navigate('SyncStatus')} /></View>,
-    tabBarStyle: { backgroundColor: colors.forest, height: Math.max(62, 44 + 18 * fontScale) + insets.bottom, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 8) }, tabBarActiveTintColor: colors.coral, tabBarInactiveTintColor: colors.cream,
+    tabBarStyle: { backgroundColor: colors.tabBackground, height: Math.max(62, 44 + 18 * fontScale) + insets.bottom, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 8) }, tabBarActiveBackgroundColor: colors.tabActiveBackground, tabBarActiveTintColor: colors.tabActive, tabBarInactiveTintColor: colors.tabInactive,
     tabBarItemStyle: { minHeight: 48 }, tabBarLabelPosition: 'below-icon',
     tabBarLabel: ({ children, color }) => <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color, fontFamily: 'Inter_500Medium', fontSize: 11, lineHeight: 14, textAlign: 'center', maxWidth: '100%' }}>{children}</Text>,
-    tabBarAccessibilityLabel: `${route.name} tab`, tabBarIcon: ({ focused }) => <Icon name={tabIcons[route.name]} color={focused ? colors.coral : colors.cream} />,
+    tabBarAccessibilityLabel: `${route.name} tab`, tabBarIcon: ({ focused }) => <Icon name={tabIcons[route.name]} color={focused ? colors.tabActive : colors.tabInactive} />,
   })}>
     <Tab.Screen name="Fixtures">{() => <FixturesScreen navigation={navigation} />}</Tab.Screen>
     <Tab.Screen name="Standings" component={StandingsScreen} />
@@ -81,7 +81,7 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
     <Stack.Screen name="CoStream" component={CoStreamScreen} options={{ title: 'Co-Stream' }} />
     <Stack.Screen name="PlayerProfile" component={PlayerProfileScreen} options={{ title: 'Player Profile' }} />
     <Stack.Screen name="ClubProfile" component={ClubProfileScreen} options={{ title: 'Club Profile' }} />
-  </Stack.Navigator>{!!toast && <View pointerEvents="none" accessibilityLiveRegion="polite" style={{ position: 'absolute', bottom: 96, left: 16, right: 16, borderRadius: 16, padding: 16, backgroundColor: colors.forest }}><Text accessibilityLiveRegion="polite" style={[ui.body, { color: colors.cream }]}>{toast}</Text></View>}</View>;
+  </Stack.Navigator>{!!toast && <View pointerEvents="none" accessibilityLiveRegion="polite" style={{ position: 'absolute', bottom: 96, left: 16, right: 16, borderRadius: 16, padding: 16, backgroundColor: colors.panel }}><Text accessibilityLiveRegion="polite" style={[ui.body, { color: colors.panelText }]}>{toast}</Text></View>}</View>;
 }
 
 

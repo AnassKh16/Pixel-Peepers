@@ -143,7 +143,7 @@ export function CoStreamScreen({ route, navigation }: NativeStackScreenProps<Rou
             <TextInput
               style={styles.chatInput}
               placeholder="Send message to stream chat..."
-              placeholderTextColor={colors.sand}
+              placeholderTextColor={colors.chatPlaceholder}
               value={inputText}
               onChangeText={setInputText}
               accessibilityLabel="chat-input-field"
@@ -154,7 +154,7 @@ export function CoStreamScreen({ route, navigation }: NativeStackScreenProps<Rou
               accessibilityLabel="chat-send-btn"
               onPress={handleSendMessage}
             >
-              <Icon name="send" size={18} color={colors.cream} />
+              <Icon name="send" size={18} color={colors.onSelection} />
             </Pressable>
           </View>
         </Card>
@@ -197,13 +197,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: colors.subtleBorder,
     gap: 6,
   },
   tileHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   tileMockVideo: {
     height: 76,
-    backgroundColor: '#d8decb',
+    backgroundColor: colors.tileVideo,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -213,30 +213,30 @@ const styles = StyleSheet.create({
   tileId: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.forest, opacity: 0.7 },
   tileRole: { fontFamily: 'Inter_500Medium', fontSize: 11, color: colors.forest, textAlign: 'center' },
   compositeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  compositeSpec: { fontFamily: 'Inter_500Medium', fontSize: 12, color: colors.sand },
+  compositeSpec: { fontFamily: 'Inter_500Medium', fontSize: 12, color: colors.panelMuted },
   urlBox: {
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: colors.mediaOverlay,
     borderRadius: 8,
     padding: 10,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.mediaBorder,
   },
-  urlLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: colors.coral, marginBottom: 2 },
-  urlValue: { fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.cream },
+  urlLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 11, color: colors.accentText, marginBottom: 2 },
+  urlValue: { fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.panelText },
   chatRoomHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   chatRoomTitle: { fontFamily: 'Sora_700Bold', fontSize: 15, color: colors.forest },
   chatListContainer: {
     minHeight: 120,
     maxHeight: 220,
-    backgroundColor: '#fff',
+    backgroundColor: colors.chatBackground,
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: colors.sand,
+    borderColor: colors.border,
     gap: 8,
   },
-  chatMessageRow: { borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.04)', paddingBottom: 6 },
+  chatMessageRow: { borderBottomWidth: 1, borderBottomColor: colors.divider, paddingBottom: 6 },
   chatSenderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chatSender: { fontFamily: 'Inter_600SemiBold', fontSize: 12, color: colors.forest },
   chatTime: { fontFamily: 'Inter_400Regular', fontSize: 10, color: colors.forest, opacity: 0.5 },
@@ -245,20 +245,20 @@ const styles = StyleSheet.create({
   chatInput: {
     flex: 1,
     minHeight: 46,
-    backgroundColor: '#fff',
+    backgroundColor: colors.chatBackground,
     borderRadius: 23,
     paddingHorizontal: 16,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: colors.forest,
     borderWidth: 1,
-    borderColor: colors.sand,
+    borderColor: colors.border,
   },
   chatSendButton: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: colors.forest,
+    backgroundColor: colors.selection,
     alignItems: 'center',
     justifyContent: 'center',
   },

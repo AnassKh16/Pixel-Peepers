@@ -17,8 +17,8 @@ export function ClubScreen({ navigation }: { navigation: Pick<NativeStackNavigat
   const { online, revision, session, pending } = useApp(); const [tab, setTab] = useState('Roster');
   const resource = useResource(() => getClub(online), [online, revision]); const club = resource.data;
   return <Page onRefresh={resource.reload} refreshing={resource.loading}><Resource resource={resource}>{club && <>
-    <Card dark><Text accessibilityLabel={`${club.name} club crest`} style={{ color: colors.coral, fontFamily: 'Sora_800ExtraBold', fontSize: 48 }}>{club.name.split(' ').map(word => word[0]).slice(0, 2).join('')}</Text>
-      <Text style={[ui.title, { color: colors.cream }]}>{club.name}</Text><Text style={[ui.body, { color: colors.cream }]}>{club.venue}{'\n'}{club.social}</Text></Card>
+    <Card dark><Text accessibilityLabel={`${club.name} club crest`} style={{ color: colors.accentText, fontFamily: 'Sora_800ExtraBold', fontSize: 48 }}>{club.name.split(' ').map(word => word[0]).slice(0, 2).join('')}</Text>
+      <Text style={[ui.title, { color: colors.panelText }]}>{club.name}</Text><Text style={[ui.body, { color: colors.panelText }]}>{club.venue}{'\n'}{club.social}</Text></Card>
     {(!online || club.cached) && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
     <View style={ui.row}>{['Roster', 'Staff', 'History'].map(label => <Chip key={label} label={label} active={tab === label} onPress={() => setTab(label)} />)}</View>
     {tab === 'Roster' && <>{!club.roster.length && <Empty message="Your club’s next chapter starts with its first player." />}{club.roster.map(player => <Card key={player.id}><Body strong>#{player.number} · {player.name}</Body><Body>{player.position}</Body><Badge label={player.role} icon="person-outline" />

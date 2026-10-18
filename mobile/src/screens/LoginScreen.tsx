@@ -49,10 +49,10 @@ export function LoginScreen({ onSettings, onSignedIn }: { onSettings: () => void
 }
 const s = StyleSheet.create({
   fill: { flex: 1, backgroundColor: colors.cream }, content: { flexGrow: 1 },
-  brand: { backgroundColor: colors.forest, padding: 28, gap: 12, alignItems: 'flex-start' },
-  logo: { backgroundColor: tenant.primary, color: colors.forest, fontFamily: 'Sora_800ExtraBold', fontSize: 28, textAlign: 'center', width: 52, height: 52, borderRadius: 16, paddingTop: 7 },
-  wordmark: { color: colors.cream, fontFamily: 'Sora_800ExtraBold', fontSize: 36 },
-  kicker: { color: colors.cream, fontFamily: 'Inter_500Medium', fontSize: 16 },
+  brand: { backgroundColor: colors.panel, padding: 28, gap: 12, alignItems: 'flex-start' },
+  logo: { backgroundColor: tenant.primary, color: colors.onPrimary, fontFamily: 'Sora_800ExtraBold', fontSize: 28, textAlign: 'center', width: 52, height: 52, borderRadius: 16, paddingTop: 7 },
+  wordmark: { color: colors.panelText, fontFamily: 'Sora_800ExtraBold', fontSize: 36 },
+  kicker: { color: colors.panelText, fontFamily: 'Inter_500Medium', fontSize: 16 },
   form: { padding: 24, gap: 14, maxWidth: 560, width: '100%', alignSelf: 'center' },
   title: { color: colors.forest, fontFamily: 'Sora_700Bold', fontSize: 28 },
   body: { color: colors.moss, fontFamily: 'Inter_400Regular', fontSize: 16, lineHeight: 24 },

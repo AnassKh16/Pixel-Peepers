@@ -27,6 +27,11 @@ export const linking: LinkingOptions<Routes> = {
       const id = parts.slice(1).join('/');
 
       if (segment === 'entity' && id) {
+        if (id.startsWith('cs-session-')) {
+          return {
+            routes: [{ name: 'CoStream', params: { id } }],
+          };
+        }
         if (id.startsWith('match-')) {
           return {
             routes: [{ name: 'MatchLive', params: { id } }],

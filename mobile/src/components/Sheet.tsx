@@ -7,8 +7,8 @@ export function Sheet({ visible, onClose, busy = false, children }: React.PropsW
   const insets = useSafeAreaInsets();
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={() => { if (!busy) onClose(); }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View accessibilityViewIsModal style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#16261FCC', padding: 16, paddingTop: insets.top + 16 }}>
-        <ScrollView style={{ flexGrow: 0, maxHeight: '100%', borderRadius: 24, backgroundColor: colors.cream }}
+      <View accessibilityViewIsModal style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: colors.overlay, padding: 16, paddingTop: insets.top + 16 }}>
+        <ScrollView style={{ flexGrow: 0, maxHeight: '100%', borderRadius: 24, backgroundColor: colors.card }}
           keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 20, gap: 16 }}>
           {children}
         </ScrollView>

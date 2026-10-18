@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { NavigationContainer, DefaultTheme, createNavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme, DefaultTheme, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +12,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { Button } from './src/components/Button';
 import { loadServerAddress } from './src/config';
 import { Session, setApiSession, subscribeAuthExpiry } from './src/services/api';
-import { colors } from './src/theme';
+import { colors, isDark } from './src/theme';
 import { AppProvider } from './src/providers/AppProvider';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { Routes } from './src/navigation/types';
@@ -65,7 +65,8 @@ export default function App() {
   async function logout() { await SecureStore.deleteItemAsync('skorly.session'); await SecureStore.deleteItemAsync('skorly.token'); setApiSession(null); setSession(null); }
   if (startupError || fontError) return <SafeAreaProvider><View style={s.center}><Text style={s.body}>{startupError || 'Could not load the app fonts. Please reopen the app.'}</Text>{!!startupError && <Button title="Retry" onPress={initialize} />}</View></SafeAreaProvider>;
   if (!ready || !fontsLoaded) return <View style={s.center}><ActivityIndicator accessibilityLabel="Loading Skorly" color={colors.forest} /></View>;
-  return <SafeAreaProvider><StatusBar style="dark" /><NavigationContainer ref={navigationRef} linking={linking} theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: colors.forest, background: colors.cream, card: colors.cream, text: colors.forest, border: colors.sand } }}>
+  const navigationTheme = isDark ? DarkTheme : DefaultTheme;
+  return <SafeAreaProvider><StatusBar style={isDark ? 'light' : 'dark'} /><NavigationContainer ref={navigationRef} linking={linking} theme={{ ...navigationTheme, colors: { ...navigationTheme.colors, primary: colors.forest, background: colors.cream, card: colors.cream, text: colors.forest, border: colors.border, notification: isDark ? colors.coral : navigationTheme.colors.notification } }}>
     {session ? <AppProvider key={session.email} session={session}><AppNavigator onLogout={logout} /></AppProvider> : <Auth.Navigator initialRouteName="Login" screenOptions={{ headerTitleStyle: { fontFamily: 'Sora_700Bold' }, contentStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest }}>
       <Auth.Screen name="Login" options={{ title: 'Welcome to Skorly' }}>{({ navigation }) => <LoginScreen onSettings={() => navigation.navigate('Settings')} onSignedIn={setSession} />}</Auth.Screen>
       <Auth.Screen name="Settings">{() => <SettingsScreen />}</Auth.Screen>

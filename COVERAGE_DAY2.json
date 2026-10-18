@@ -1,0 +1,63 @@
+{
+  "streaming": null,
+  "costream": null,
+  "qr_guest": null,
+  "moderation_dlq": null,
+  "observability": null,
+  "status": "not measured",
+  "source_files": {
+    "streaming": [
+      "backend/src/streaming.js",
+      "backend/src/score-streams.js",
+      "backend/src/score-view.js"
+    ],
+    "costream": [
+      "backend/src/costream.js"
+    ],
+    "qr_guest": [
+      "backend/src/qr.js",
+      "backend/src/guest-boundary.js",
+      "backend/src/guest-cart.js",
+      "backend/src/public-api.js",
+      "backend/src/public-data.js"
+    ],
+    "moderation_dlq": [
+      "backend/src/moderation.js",
+      "backend/src/dlq.js",
+      "backend/src/chat.js",
+      "backend/src/chat-filter.js"
+    ],
+    "observability": [
+      "backend/src/metrics.js"
+    ]
+  },
+  "test_files": {
+    "streaming": [
+      "backend/test/day2-b1.test.js",
+      "backend/test/day2-b2.test.js",
+      "tests/selenium/test_guest_grid.py",
+      "tests/appium/test_mobile_deeplink.py"
+    ],
+    "costream": [
+      "backend/test/day2-b1.test.js",
+      "backend/test/day2-b2.test.js",
+      "tests/appium/test_cross_surface.py"
+    ],
+    "qr_guest": [
+      "backend/test/day2-b2.test.js",
+      "tests/selenium/test_guest_grid.py",
+      "tests/appium/test_mobile_deeplink.py",
+      "tests/k6_load.js"
+    ],
+    "moderation_dlq": [
+      "backend/test/day2-b3.test.js",
+      "backend/test/day2-b2.test.js",
+      "tests/appium/test_cross_surface.py",
+      "tests/k6_load.js"
+    ],
+    "observability": [
+      "backend/test/day2-b3.test.js"
+    ]
+  }
+}
+

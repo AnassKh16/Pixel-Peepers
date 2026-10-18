@@ -2,6 +2,7 @@
   "expo": {
     "name": "Skorly",
     "slug": "skorly",
+    "scheme": "nascon",
     "version": "1.0.0",
     "orientation": "default",
     "userInterfaceStyle": "light",

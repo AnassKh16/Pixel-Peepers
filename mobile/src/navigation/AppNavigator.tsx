@@ -9,6 +9,9 @@ import { StoreScreen, ProductDetailScreen, CartScreen, CheckoutScreen, PaymentRe
 import { ClubScreen, RosterScreen, ScoringScreen } from '../screens/ClubScreens';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { SyncStatusScreen } from '../screens/SyncStatusScreen';
+import { MatchLiveScreen } from '../screens/MatchLiveScreen';
+import { CoStreamScreen } from '../screens/CoStreamScreen';
+import { PlayerProfileScreen, ClubProfileScreen } from '../screens/ProfileScreens';
 import { Badge, Body, Card, Icon, Page, SyncPill, Title, ui, useResource, Resource, LinkCard, Empty } from '../components/UI';
 import { Button } from '../components/Button';
 import { useApp } from '../providers/AppProvider';
@@ -74,6 +77,10 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
     {['League Organizer', 'Super Admin'].includes(session.role) && <Stack.Screen name="Scoring" component={ScoringScreen} />}
     <Stack.Screen name="SyncStatus" component={SyncStatusScreen} options={{ title: 'Sync Status' }} />
     <Stack.Screen name="Settings">{() => <ConnectedSettings logout={logout} />}</Stack.Screen>
+    <Stack.Screen name="MatchLive" component={MatchLiveScreen} options={{ title: 'Live Match' }} />
+    <Stack.Screen name="CoStream" component={CoStreamScreen} options={{ title: 'Co-Stream' }} />
+    <Stack.Screen name="PlayerProfile" component={PlayerProfileScreen} options={{ title: 'Player Profile' }} />
+    <Stack.Screen name="ClubProfile" component={ClubProfileScreen} options={{ title: 'Club Profile' }} />
   </Stack.Navigator>{!!toast && <View pointerEvents="none" accessibilityLiveRegion="polite" style={{ position: 'absolute', bottom: 96, left: 16, right: 16, borderRadius: 16, padding: 16, backgroundColor: colors.forest }}><Text accessibilityLiveRegion="polite" style={[ui.body, { color: colors.cream }]}>{toast}</Text></View>}</View>;
 }
 

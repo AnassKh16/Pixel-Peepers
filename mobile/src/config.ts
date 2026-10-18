@@ -14,3 +14,12 @@ export async function saveServerAddress(value: string) {
   await SecureStore.setItemAsync(key, address);
   BASE_URL = address;
 }
+
+export function getServerHost(url: string = BASE_URL): string {
+  try {
+    const match = url.match(/^https?:\/\/([^:/]+)/);
+    return match ? match[1] : 'localhost';
+  } catch {
+    return 'localhost';
+  }
+}

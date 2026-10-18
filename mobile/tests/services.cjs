@@ -31,6 +31,10 @@ function loader() {
           withTransactionAsync: async task => { connection.exec('BEGIN'); try { await task(); connection.exec('COMMIT'); } catch (e) { connection.exec('ROLLBACK'); throw e; } },
         };
       } };
+      if (name === '@react-navigation/native') return {
+        getStateFromPath: () => undefined,
+        getPathFromState: () => '',
+      };
       if (name.startsWith('.')) return load(path.resolve(path.dirname(filename), `${name}.ts`));
       return require(name);
     };
@@ -128,5 +132,56 @@ if (process.argv.includes('--live-readonly')) {
     assert.equal(calls.at(-1).body.actions[0].base_version, 1);
   } finally { global.fetch = originalFetch; for (const connection of connections) connection.close(); fs.rmSync(filename, { force: true }); }
 });
+
+test('Deep links, scheme, manifest, and server host specifications', () => {
+  const load = loader();
+  const config = load('src/config.ts');
+  assert.equal(config.getServerHost('http://192.168.137.1:8080'), '192.168.137.1');
+  assert.equal(config.getServerHost('http://localhost:8080'), 'localhost');
+  assert.equal(config.getServerHost('https://skorly.test:8888/live'), 'skorly.test');
+
+  const appJson = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
+  assert.equal(appJson.expo.scheme, 'nascon', 'app.json must have scheme: nascon');
+
+  const manifest = fs.readFileSync(path.join(root, 'android/app/src/main/AndroidManifest.xml'), 'utf8');
+  assert.match(manifest, /android:scheme="nascon"/, 'AndroidManifest must have scheme nascon');
+  assert.match(manifest, /android\.intent\.action\.VIEW/, 'AndroidManifest must have action VIEW');
+  assert.match(manifest, /android\.intent\.category\.DEFAULT/, 'AndroidManifest must have category DEFAULT');
+  assert.match(manifest, /android\.intent\.category\.BROWSABLE/, 'AndroidManifest must have category BROWSABLE');
+
+  const linkingModule = load('src/navigation/linking.ts');
+  const linking = linkingModule.linking;
+  assert.deepEqual(linking.prefixes, ['nascon://']);
+
+  const matchRes = linking.getStateFromPath('nascon://entity/match-m1');
+  assert.equal(matchRes.routes[0].name, 'MatchLive');
+  assert.equal(matchRes.routes[0].params.id, 'match-m1');
+
+  const matchResPlain = linking.getStateFromPath('entity/match-m1');
+  assert.equal(matchResPlain.routes[0].name, 'MatchLive');
+  assert.equal(matchResPlain.routes[0].params.id, 'match-m1');
+
+  const streamRes = linking.getStateFromPath('nascon://stream/cs-session-101');
+  assert.equal(streamRes.routes[0].name, 'CoStream');
+  assert.equal(streamRes.routes[0].params.id, 'cs-session-101');
+
+  const streamResPlain = linking.getStateFromPath('stream/cs-session-101');
+  assert.equal(streamResPlain.routes[0].name, 'CoStream');
+  assert.equal(streamResPlain.routes[0].params.id, 'cs-session-101');
+
+  const playerRes = linking.getStateFromPath('nascon://entity/player-alpha-1');
+  assert.equal(playerRes.routes[0].name, 'PlayerProfile');
+  assert.equal(playerRes.routes[0].params.id, 'player-alpha-1');
+
+  const clubRes = linking.getStateFromPath('nascon://entity/club-alpha-1');
+  assert.equal(clubRes.routes[0].name, 'ClubProfile');
+  assert.equal(clubRes.routes[0].params.id, 'club-alpha-1');
+
+  assert.equal(linking.getPathFromState({ routes: [{ name: 'MatchLive', params: { id: 'match-m1' } }] }), 'entity/match-m1');
+  assert.equal(linking.getPathFromState({ routes: [{ name: 'CoStream', params: { id: 'cs-session-101' } }] }), 'stream/cs-session-101');
+  assert.equal(linking.getPathFromState({ routes: [{ name: 'PlayerProfile', params: { id: 'player-alpha-1' } }] }), 'entity/player-alpha-1');
+  assert.equal(linking.getPathFromState({ routes: [{ name: 'ClubProfile', params: { id: 'club-alpha-1' } }] }), 'entity/club-alpha-1');
+});
+
 
 

@@ -5,4 +5,9 @@ export type Routes = {
   MatchDetail: { id: string }; ProductDetail: { id: string }; Cart: undefined; Checkout: undefined;
   PaymentResult: { id: string }; Receipt: { id: string }; Roster: undefined; Scoring: { id?: string };
   SyncStatus: undefined; Settings: undefined;
+  Login: undefined;
+  MatchLive: { id: string };
+  CoStream: { id: string };
+  PlayerProfile: { id: string };
+  ClubProfile: { id: string };
 };

@@ -15,7 +15,12 @@ import { Session, setApiSession } from './src/services/api';
 import { colors } from './src/theme';
 import { AppProvider } from './src/providers/AppProvider';
 import { AppNavigator } from './src/navigation/AppNavigator';
-const Auth = createNativeStackNavigator<{ Login: undefined; Settings: undefined }>();
+import { Routes } from './src/navigation/types';
+import { linking } from './src/navigation/linking';
+import { MatchLiveScreen } from './src/screens/MatchLiveScreen';
+import { CoStreamScreen } from './src/screens/CoStreamScreen';
+import { PlayerProfileScreen, ClubProfileScreen } from './src/screens/ProfileScreens';
+const Auth = createNativeStackNavigator<Routes>();
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false); const [startupError, setStartupError] = useState('');
@@ -37,10 +42,14 @@ export default function App() {
   async function logout() { await SecureStore.deleteItemAsync('skorly.session'); await SecureStore.deleteItemAsync('skorly.token'); setApiSession(null); setSession(null); }
   if (startupError || fontError) return <SafeAreaProvider><View style={s.center}><Text style={s.body}>{startupError || 'Could not load the app fonts. Please reopen the app.'}</Text>{!!startupError && <Button title="Retry" onPress={initialize} />}</View></SafeAreaProvider>;
   if (!ready || !fontsLoaded) return <View style={s.center}><ActivityIndicator accessibilityLabel="Loading Skorly" color={colors.forest} /></View>;
-  return <SafeAreaProvider><StatusBar style="dark" /><NavigationContainer theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: colors.forest, background: colors.cream, card: colors.cream, text: colors.forest, border: colors.sand } }}>
-    {session ? <AppProvider key={session.email} session={session}><AppNavigator onLogout={logout} /></AppProvider> : <Auth.Navigator screenOptions={{ headerTitleStyle: { fontFamily: 'Sora_700Bold' }, contentStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest }}>
+  return <SafeAreaProvider><StatusBar style="dark" /><NavigationContainer linking={linking} theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: colors.forest, background: colors.cream, card: colors.cream, text: colors.forest, border: colors.sand } }}>
+    {session ? <AppProvider key={session.email} session={session}><AppNavigator onLogout={logout} /></AppProvider> : <Auth.Navigator initialRouteName="Login" screenOptions={{ headerTitleStyle: { fontFamily: 'Sora_700Bold' }, contentStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest }}>
       <Auth.Screen name="Login" options={{ title: 'Welcome to Skorly' }}>{({ navigation }) => <LoginScreen onSettings={() => navigation.navigate('Settings')} onSignedIn={setSession} />}</Auth.Screen>
       <Auth.Screen name="Settings">{() => <SettingsScreen />}</Auth.Screen>
+      <Auth.Screen name="MatchLive" component={MatchLiveScreen} options={{ title: 'Live Match' }} />
+      <Auth.Screen name="CoStream" component={CoStreamScreen} options={{ title: 'Co-Stream' }} />
+      <Auth.Screen name="PlayerProfile" component={PlayerProfileScreen} options={{ title: 'Player Profile' }} />
+      <Auth.Screen name="ClubProfile" component={ClubProfileScreen} options={{ title: 'Club Profile' }} />
     </Auth.Navigator>}
   </NavigationContainer></SafeAreaProvider>;
 }

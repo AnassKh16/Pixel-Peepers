@@ -66,9 +66,10 @@ def test_guest_cart_and_live_score_update(driver, web_base, api_base):
         )
     ).click()
     assert wait.until(
-        EC.text_to_be(
-            (By.CSS_SELECTOR, '[data-testid="guest-cart-count"]'), "1"
-        )
+        lambda current: current.find_element(
+            By.CSS_SELECTOR, '[data-testid="guest-cart-count"]'
+        ).text.strip()
+        == "1"
     )
 
     score_banner = wait.until(

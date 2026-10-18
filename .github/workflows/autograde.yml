@@ -40,6 +40,12 @@ jobs:
 
       - name: Verify Selenium Grid
         run: |
+          for attempt in $(seq 1 120); do
+            if python -c "import json, urllib.request; value=json.load(urllib.request.urlopen('http://localhost:4444/status'))['value']; assert value['ready'] is True and len(value['nodes']) >= 3, value" 2>/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
           python -c "import json, urllib.request; value=json.load(urllib.request.urlopen('http://localhost:4444/status'))['value']; assert value['ready'] is True and len(value['nodes']) >= 3, value"
 
       - name: Install test dependencies

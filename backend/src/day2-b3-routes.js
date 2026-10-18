@@ -44,7 +44,7 @@ export function registerB3Routes(app, deps) {
   const scalar = async sql => Number((await pool.query(sql)).rows[0].count);
   let mediaSample;
   const metrics = {
-    activeWsConnections: () => Number(app.locals?.activeWsConnections ?? 0),
+    activeWsConnections: () => app.locals?.getActiveWsConnections?.() ?? Number(app.locals?.activeWsConnections ?? 0),
     activeStreams: () => scalar(`SELECT
       (SELECT count(*) FROM stream_keys WHERE status='active') +
       (SELECT count(*) FROM costream_sessions WHERE data->'response'->>'status'='active') AS count`),

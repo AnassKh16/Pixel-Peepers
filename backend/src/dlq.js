@@ -73,10 +73,10 @@ export function createDLQ(pool, {deliver = async () => { throw new Error('Simula
       return read(client);
     });
   }
-  async function snapshot() { await init(); return transaction(read); }
+  async function snapshot() { await init(); return read(pool); }
   async function depth() {
     await init();
-    return transaction(async client => Number((await client.query('SELECT count(*) AS count FROM day2_dlq')).rows[0].count));
+    return Number((await pool.query('SELECT count(*) AS count FROM day2_dlq')).rows[0].count);
   }
   async function undelivered() { return (await snapshot()).undelivered_events; }
   async function clear() { await init(); return transaction(client => client.query('DELETE FROM day2_dlq')); }

@@ -110,7 +110,12 @@ test('invalid or missing metrics fail explicitly instead of inventing values', a
 // running PostgreSQL integration tests on Laptop 2. Laptop 1 runs real DB tests.
 function queuePool() {
   const state = {events:[],tail:Promise.resolve(),sql:[],releases:0,failInsert:false};
-  return {state, async connect() {
+  return {state, async query(sql) {
+    state.sql.push(sql);
+    if(sql==='SELECT data FROM day2_dlq ORDER BY sequence')return {rows:state.events.map(data=>({data}))};
+    if(sql==='SELECT count(*) AS count FROM day2_dlq')return {rows:[{count:String(state.events.length)}]};
+    throw Error('Unexpected read: '+sql);
+  }, async connect() {
     let unlock, pending;
     return {async query(sql,args=[]) {
       state.sql.push(sql);

@@ -10,3 +10,5 @@
 
 .video-empty>*{max-width:100%}.video-empty span:last-child{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 
+
+.video-shell{width:100%;max-width:100%}

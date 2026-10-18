@@ -35,7 +35,8 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   app.use(guestWriteBoundary);
   const json = express.json({limit: '1mb', strict: false, type: () => true});
   Object.defineProperty(app.locals,'activeWsConnections',{get:()=>[...streams.listeners.values()].reduce((n,sinks)=>n+sinks.size,0)});
-  const {privacy}=registerB3Routes(app,{pool,json});
+  const b3=registerB3Routes(app,{pool,json});app.locals.b3=b3;
+  const {privacy}=b3;
   const probe = (method, path, action, kind) => app[method](path, async (req, res, next) => {
     const user = tokens.verify(req.headers.authorization);
     if (!user) return res.status(401).json(errorBody('UNAUTHENTICATED', 'Valid bearer token required'));

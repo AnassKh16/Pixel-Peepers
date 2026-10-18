@@ -1,8 +1,9 @@
-import {randomBytes} from 'node:crypto';
+import {batchRead} from './read-batch.js';
+import {createHash} from 'node:crypto';
 import QRCode from 'qrcode';
 import PDFDocument from 'pdfkit';
 import {signDay2} from './day2-signature.js';
-import {getScore} from './scoring.js';
+import {getScore,projectScore} from './scoring.js';
 import {DomainError,validId} from './validation.js';
 
 const origin='http://localhost:8080';
@@ -23,16 +24,51 @@ async function entityState(client,id) {
   return {entity_type:row.kind,entity_status:'active',target_route:`/web/${row.kind==='player'?'players':'clubs'}/${encodeURIComponent(id)}`};
 }
 
+// One statement supplies a coherent live snapshot without reserving a connection
+// across round trips. Inspection never creates mappings or scan telemetry.
+async function inspectQr(pool,id) {
+  const row=(await batchRead(pool,`qr:${id}`,()=>pool.query(`WITH entity AS (
+    SELECT 'match' AS kind,data FROM matches WHERE match_id=$1
+    UNION ALL SELECT 'player','{}'::jsonb FROM players WHERE player_id=$1
+    UNION ALL SELECT 'club','{}'::jsonb FROM clubs WHERE club_id=$1
+    UNION ALL SELECT 'costream',data FROM costream_sessions WHERE session_id=$1
+    LIMIT 1
+  ) SELECT entity.*,s.config,q.data AS mapping,
+    CASE WHEN entity.kind='match' THEN COALESCE((SELECT jsonb_agg(e.data ORDER BY e.sequence)
+      FROM events e WHERE e.match_id=$1),'[]'::jsonb) ELSE '[]'::jsonb END AS records
+    FROM entity LEFT JOIN sports s ON s.sport_id=entity.data->>'sport_id'
+    LEFT JOIN qr_mappings q ON q.entity_id=$1`,[id]))).rows[0];
+  if(!row)missing();
+  let state;
+  if(row.kind==='match'){
+    const status=row.data.status??projectScore(id,row.data,row.config,row.records).status;
+    const suffix={upcoming:'preview',in_progress:'live',completed:'vod'}[status]??`notice?state=${encodeURIComponent(status)}`;
+    state={entity_type:'match',entity_status:status,target_route:`/web/matches/${encodeURIComponent(id)}/${suffix}`};
+  }else if(row.kind==='costream')state={entity_type:'costream',entity_status:row.data.response.status,target_route:`/web/costream/${encodeURIComponent(id)}`};
+  else state={entity_type:row.kind,entity_status:'active',target_route:`/web/${row.kind==='player'?'players':'clubs'}/${encodeURIComponent(id)}`};
+  return qrResponse(id,state,row.mapping??newMapping(id,state));
+}
+function newMapping(id,state){
+  const short_code=`q-${createHash('sha256').update(id,'utf8').digest('hex').slice(0,16)}`;
+  return {entity_id:id,entity_type:state.entity_type,short_code,short_url:`${origin}/q/${short_code}`,scan_count:0};
+}
+function qrResponse(id,state,mapping){
+  const payload={entity_id:id,short_url:mapping.short_url,target_route:state.target_route};
+  return {entity_id:id,entity_type:state.entity_type,entity_status:state.entity_status,short_url:mapping.short_url,target_route:state.target_route,
+    deep_link_uri:`nascon://entity/${id}`,scan_count:mapping.scan_count,
+    export_formats:Object.fromEntries(['svg','png','pdf'].map(format=>[format,`${origin}/audit/v1/qr/${encodeURIComponent(id)}/export.${format}`])),signature:signDay2(id,payload)};
+}
+
 export async function resolveQr(pool,id,{inspect=false,userAgent='',now=new Date()}={}) {
   if(!validId(id))missing();
+  if(inspect)return inspectQr(pool,id);
   const client=await pool.connect();
   try{
     await client.query('BEGIN');await client.query('SELECT pg_advisory_xact_lock_shared(5505)');
     const state=await entityState(client,id);
     let mapping=(await client.query('SELECT data FROM qr_mappings WHERE entity_id=$1',[id])).rows[0]?.data;
     if(!mapping){
-      const short_code=`q-${randomBytes(8).toString('hex')}`;
-      const created={entity_id:id,entity_type:state.entity_type,short_code,short_url:`${origin}/q/${short_code}`,scan_count:0};
+      const created=newMapping(id,state);
       await client.query('INSERT INTO qr_mappings(entity_id,data) VALUES ($1,$2) ON CONFLICT(entity_id) DO NOTHING',[id,created]);
       mapping=(await client.query('SELECT data FROM qr_mappings WHERE entity_id=$1',[id])).rows[0].data;
     }
@@ -42,16 +78,20 @@ export async function resolveQr(pool,id,{inspect=false,userAgent='',now=new Date
       const hour=now.toISOString().slice(0,13)+':00:00Z';
       await client.query('INSERT INTO qr_scan_telemetry(entity_id,device_family,utc_hour,scan_count) VALUES ($1,$2,$3,1) ON CONFLICT(entity_id,device_family,utc_hour) DO UPDATE SET scan_count=qr_scan_telemetry.scan_count+1',[id,family,hour]);
     }
-    const payload={entity_id:id,short_url:mapping.short_url,target_route:state.target_route};
-    const response={entity_id:id,entity_type:state.entity_type,entity_status:state.entity_status,short_url:mapping.short_url,target_route:state.target_route,
-      deep_link_uri:`nascon://entity/${id}`,scan_count:mapping.scan_count,
-      export_formats:Object.fromEntries(['svg','png','pdf'].map(format=>[format,`${origin}/audit/v1/qr/${encodeURIComponent(id)}/export.${format}`])),signature:signDay2(id,payload)};
+    const response=qrResponse(id,state,mapping);
     await client.query('COMMIT');return response;
   }catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
 }
 
 export async function resolveShortCode(pool,code,options={}) {
-  const row=(await pool.query("SELECT entity_id FROM qr_mappings WHERE data->>'short_code'=$1",[code])).rows[0];
+  let row=(await pool.query("SELECT entity_id FROM qr_mappings WHERE data->>'short_code'=$1",[code])).rows[0];
+  // An inspected/exported unmapped entity has a deterministic virtual URL.
+  // Its first actual scan materializes the same mapping in the normal transaction.
+  if(!row&&/^q-[a-f0-9]{16}$/.test(code))row=(await pool.query(`
+    WITH entities AS (SELECT match_id AS entity_id FROM matches UNION ALL SELECT player_id FROM players
+      UNION ALL SELECT club_id FROM clubs UNION ALL SELECT session_id FROM costream_sessions)
+    SELECT entity_id FROM entities e WHERE 'q-' || left(encode(sha256(convert_to(entity_id,'UTF8')),'hex'),16)=$1
+      AND NOT EXISTS(SELECT 1 FROM qr_mappings q WHERE q.entity_id=e.entity_id) LIMIT 1`,[code])).rows[0];
   if(!row)missing();
   return resolveQr(pool,row.entity_id,options);
 }

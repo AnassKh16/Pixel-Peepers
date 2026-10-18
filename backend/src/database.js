@@ -8,7 +8,7 @@ import { createSigner } from './signature.js';
 const startupSalt=process.env.DAY1_SALT;
 const demoSigner=startupSalt?createSigner(startupSalt):undefined;
 // A random bcrypt salt is generated on startup; reuse keeps repeat resets identical.
-const demoPasswordHash = hash('Nascon@26', 10);
+const demoPasswordHash = process.env.DEMO_PASSWORD_HASH ? Promise.resolve(process.env.DEMO_PASSWORD_HASH) : hash('Nascon@26', 10);
 
 export const schema = `
 CREATE TABLE IF NOT EXISTS tenants (tenant_id text PRIMARY KEY, name text NOT NULL);

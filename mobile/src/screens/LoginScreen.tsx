@@ -1,6 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { signIn, Session } from '../services/api';
@@ -8,6 +10,8 @@ import { colors, tenant } from '../theme';
 import { friendlyError } from '../services/errors';
 
 export function LoginScreen({ onSettings, onSignedIn }: { onSettings: () => void; onSignedIn: (session: Session) => void }) {
+  const navigation = useNavigation<NativeStackNavigationProp<{ Login: undefined; Settings: undefined }>>();
+  useLayoutEffect(() => { navigation.setOptions({ headerShown: false }); }, [navigation]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -24,9 +28,9 @@ export function LoginScreen({ onSettings, onSignedIn }: { onSettings: () => void
     } catch (e) { setError(friendlyError(e, 'We could not sign you in. Please try again.')); }
     finally { submitting.current = false; setBusy(false); }
   }
-  return <KeyboardAvoidingView style={s.fill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={insets.top + 56}>
+  return <KeyboardAvoidingView style={s.fill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
     <ScrollView contentContainerStyle={[s.content, { paddingBottom: insets.bottom + 16 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
-      <View style={[s.brand, { paddingLeft: Math.max(28, insets.left), paddingRight: Math.max(28, insets.right) }]}><Text accessibilityLabel={`${tenant.name} logo`} style={s.logo}>{tenant.logo}</Text>
+      <View style={[s.brand, { paddingTop: insets.top + 28, paddingLeft: Math.max(28, insets.left), paddingRight: Math.max(28, insets.right) }]}><Text accessibilityLabel={`${tenant.name} logo`} style={s.logo}>{tenant.logo}</Text>
         <Text style={s.wordmark}>{tenant.name}</Text><Text style={s.kicker}>YOUR LEAGUE. YOUR PEOPLE.</Text></View>
       <View style={s.form}><Text style={s.title}>Back in the game.</Text>
         <Text style={s.body}>Fixtures, clubs, and every moment that counts.</Text>

@@ -16,7 +16,7 @@ import { friendlyError } from '../services/errors';
 export function StoreScreen({ navigation }: { navigation: Pick<NativeStackNavigationProp<Routes>, 'navigate'> }) {
   const { online, cart, session } = useApp(); const { width } = useWindowDimensions();
   const resource = useResource(() => getProducts(online), [online]);
-  return <Page onRefresh={resource.reload} refreshing={resource.loading}><Title>For the love of the club.</Title><Body>Good gear. Great company. All prices in PKR.</Body>
+  return <Page onRefresh={resource.reload} refreshing={resource.loading}><Title>Store</Title>
     <Button title={`Your cart · ${cart.reduce((total, item) => total + item.quantity, 0)} items`} onPress={() => navigation.navigate('Cart')} />
     {resource.data?.some(product => product.cached) && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
     <Resource resource={resource}>{!resource.data?.length && <Empty message="New club gear is on its way. Check back soon." />}

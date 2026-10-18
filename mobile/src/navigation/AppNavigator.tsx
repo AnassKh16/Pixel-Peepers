@@ -20,21 +20,30 @@ const Tab = createBottomTabNavigator<Tabs>();
 const tabIcons = { Fixtures: 'football-outline', Standings: 'podium-outline', Store: 'bag-outline', Club: 'people-outline', Profile: 'person-circle-outline' } as const;
 function Profile({ navigation, logout }: { navigation: Pick<NativeStackNavigationProp<Routes>, 'navigate'>; logout: () => void }) {
   const { session, revision, cart } = useApp(); const resource = useResource(() => getOrders(session.email), [revision, cart.length]);
-  return <Page><Title>Your corner of the club.</Title><Card><Body strong>{session.email}</Body><Badge label={session.role} icon="person-outline" /><Body>Connected league account</Body></Card>
-    {['Club Manager', 'Super Admin'].includes(session.role) && <Button title="Manage roster" onPress={() => navigation.navigate('Roster')} />}
-    {['League Organizer', 'Super Admin'].includes(session.role) && <Button title="Scoring entry" onPress={() => navigation.navigate('Scoring', {})} />}
-    <Button title="Settings" onPress={() => navigation.navigate('Settings')} /><Button title="Sync Status" onPress={() => navigation.navigate('SyncStatus')} />
+  const { Pressable } = require('react-native') as typeof import('react-native');
+  const secondaryAction = (title: string, onPress: () => void) => <Pressable
+    accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
+    style={({ pressed }) => ({ minHeight: 48, borderWidth: 1, borderColor: colors.forest,
+      borderRadius: 30, backgroundColor: 'transparent', paddingVertical: 10, paddingHorizontal: 16,
+      alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1,
+      transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+    <Text style={{ color: colors.forest, fontFamily: 'Inter_600SemiBold', fontSize: 15, textAlign: 'center' }}>{title}</Text>
+  </Pressable>;
+  return <Page><Title>Profile</Title><Card><Body strong>{session.email}</Body><Badge label={session.role} icon="person-outline" /></Card>
+    {['Club Manager', 'Super Admin'].includes(session.role) && secondaryAction('Manage roster', () => navigation.navigate('Roster'))}
+    {['League Organizer', 'Super Admin'].includes(session.role) && secondaryAction('Scoring entry', () => navigation.navigate('Scoring', {}))}
+    {secondaryAction('Settings', () => navigation.navigate('Settings'))}<Button title="Sync Status" onPress={() => navigation.navigate('SyncStatus')} />
     <Title>Your receipts</Title><Resource resource={resource}>{!resource.data?.some(order => order.status === 'Paid') && <Empty message="Your paid orders will appear here." />}{resource.data?.filter(order => order.status === 'Paid').map(order => <LinkCard key={order.id} label={`Open receipt ${order.id}`} onPress={() => navigation.navigate('Receipt', { id: order.id })}><Body>{new Date(order.createdAt).toLocaleString()}</Body><Body strong>{money(order.total)}</Body></LinkCard>)}</Resource>
-    <Button title="Sign out" onPress={logout} />
+    {secondaryAction('Sign out', logout)}
   </Page>;
 }
 function Home({ navigation, logout }: NativeStackScreenProps<Routes, 'Home'> & { logout: () => void }) {
   const insets = useSafeAreaInsets(); const { fontScale } = useWindowDimensions();
-  return <Tab.Navigator screenOptions={({ route }) => ({ headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 20 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
+  return <Tab.Navigator screenOptions={({ route }) => ({ headerTitleStyle: { fontFamily: 'Sora_700Bold', fontSize: 18 }, headerStyle: { backgroundColor: colors.cream }, headerTintColor: colors.forest,
     headerRight: () => <View style={{ marginRight: 8 }}><SyncPill onPress={() => navigation.navigate('SyncStatus')} /></View>,
-    tabBarStyle: { backgroundColor: colors.forest, height: Math.max(84, 48 + 36 * fontScale) + insets.bottom, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 8) }, tabBarActiveTintColor: colors.coral, tabBarInactiveTintColor: colors.cream,
-    tabBarItemStyle: { minHeight: 56 }, tabBarLabelPosition: 'below-icon',
-    tabBarLabel: ({ children, color }) => <Text numberOfLines={2} style={{ color, fontFamily: 'Inter_500Medium', fontSize: 15, lineHeight: 18, textAlign: 'center', maxWidth: '100%' }}>{children}</Text>,
+    tabBarStyle: { backgroundColor: colors.forest, height: Math.max(62, 44 + 18 * fontScale) + insets.bottom, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 8) }, tabBarActiveTintColor: colors.coral, tabBarInactiveTintColor: colors.cream,
+    tabBarItemStyle: { minHeight: 48 }, tabBarLabelPosition: 'below-icon',
+    tabBarLabel: ({ children, color }) => <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ color, fontFamily: 'Inter_500Medium', fontSize: 11, lineHeight: 14, textAlign: 'center', maxWidth: '100%' }}>{children}</Text>,
     tabBarAccessibilityLabel: `${route.name} tab`, tabBarIcon: ({ focused }) => <Icon name={tabIcons[route.name]} color={focused ? colors.coral : colors.cream} />,
   })}>
     <Tab.Screen name="Fixtures">{() => <FixturesScreen navigation={navigation} />}</Tab.Screen>

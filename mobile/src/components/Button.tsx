@@ -15,7 +15,7 @@ export function Button({ title, onPress, busy = false, disabled = false, accessi
   </Pressable>;
 }
 const styles = StyleSheet.create({
-  button: { minHeight: 52, minWidth: 48, maxWidth: '100%', borderWidth: 2, borderColor: 'transparent', borderRadius: 30, backgroundColor: tenant.primary,
-    alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, padding: 14 },
-  label: { color: colors.forest, fontFamily: 'Inter_600SemiBold', fontSize: 16, textAlign: 'center', flexShrink: 1 },
+  button: { minHeight: 48, minWidth: 48, maxWidth: '100%', borderWidth: 2, borderColor: 'transparent', borderRadius: 30, backgroundColor: tenant.primary,
+    alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, paddingVertical: 10, paddingHorizontal: 16 },
+  label: { color: colors.forest, fontFamily: 'Inter_600SemiBold', fontSize: 15, textAlign: 'center', flexShrink: 1 },
 });

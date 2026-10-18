@@ -8,6 +8,14 @@ import { getFixtures, getLeagues, getMatch, getProducts, getStandings, money } f
 import { colors } from '../theme';
 import { Routes } from '../navigation/types';
 const statusIcon = { Live: 'radio-outline', Upcoming: 'calendar-outline', Completed: 'checkmark-circle-outline' } as const;
+function fixtureDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Time to be announced';
+  const day = date.getDate();
+  const month = date.toLocaleDateString('en-GB', { month: 'short' });
+  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${day} ${month}, ${time}`;
+}
 function LiveBadge() {
   const opacity = useRef(new Animated.Value(1)).current;
   useEffect(() => { let loop: Animated.CompositeAnimation | undefined; let active = true;
@@ -21,14 +29,14 @@ export function FixturesScreen({ navigation }: { navigation: Pick<NativeStackNav
   const { online, revision } = useApp(); const [filter, setFilter] = useState('All');
   const resource = useResource(() => getFixtures(online), [online, revision]);
   const matches = resource.data?.filter(item => filter === 'All' || item.status === filter) || [];
-  return <Page onRefresh={resource.reload} refreshing={resource.loading}><Title>Every game has a story.</Title><Body>Your league, from the first whistle to the final score.</Body>
+  return <Page onRefresh={resource.reload} refreshing={resource.loading}><Title>Fixtures</Title>
     {(!online || resource.data?.some(m => m.cached)) && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
-    <View style={ui.row}>{['All', 'Live', 'Upcoming', 'Completed'].map(label => <Chip key={label} label={label} active={label === filter} onPress={() => setFilter(label)} />)}</View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 10 }}>{['All', 'Live', 'Upcoming', 'Completed'].map(label => <Chip key={label} label={label} active={label === filter} onPress={() => setFilter(label)} />)}</ScrollView>
     <Resource resource={resource}>{!matches.length && <><Empty message="No matches yet." /><Button title={filter === 'All' ? 'Refresh fixtures' : 'Show all fixtures'} onPress={filter === 'All' ? resource.reload : () => setFilter('All')} /></>}{matches.map(match => <LinkCard key={match.id} label={`Open ${match.home} versus ${match.away}`} onPress={() => navigation.navigate('MatchDetail', { id: match.id })}>
-      <View style={ui.row}><Badge label={match.cached || !online ? 'Offline - cached' : match.status} icon={match.cached || !online ? 'cloud-offline-outline' : statusIcon[match.status]} live={!match.cached && online && match.status === 'Live'} /><Body>{match.sport}</Body></View>
+      <View style={ui.row}><Badge label={match.cached || !online ? 'Offline - cached' : match.status} icon={match.cached || !online ? 'cloud-offline-outline' : statusIcon[match.status]} live={!match.cached && online && match.status === 'Live'} /><Body>{match.sport.charAt(0).toUpperCase() + match.sport.slice(1)}</Body></View>
       <Body strong>{match.home}  vs  {match.away}</Body>
       <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={[ui.score, { fontSize: 36, textAlign: 'left' }]}>{match.status === 'Upcoming' ? '— : —' : `${match.homeScore} : ${match.awayScore}`}</Text>
-      <Body>{match.startsAt ? new Date(match.startsAt).toLocaleString() : 'Time to be announced'}{match.venue ? ` · ${match.venue}` : ''}</Body>
+      <Body>{match.startsAt ? fixtureDate(match.startsAt) : 'Time to be announced'}{match.venue ? ` · ${match.venue}` : ''}</Body>
     </LinkCard>)}</Resource>
   </Page>;
 }
@@ -53,18 +61,18 @@ export function MatchDetailScreen({ route, navigation }: NativeStackScreenProps<
   </>}</Resource></Page>;
 }
 export function StandingsScreen() {
-  const columnWidth = (index: number) => [48, 176, 48, 48, 48, 48, 72, 64, 200][index];
+  const columnWidth = (index: number) => [28, 176, 48, 48, 48, 48, 72, 64, 200][index];
   const { online, revision } = useApp(); const [league, setLeague] = useState('');
   const leagues = useResource(() => getLeagues(online), [online, revision]);
   const selected = leagues.data?.some(l => l.id === league) ? league : leagues.data?.[0]?.id || '';
   const resource = useResource(() => selected ? getStandings(selected, online) : Promise.resolve([]), [selected, online, revision]);
-  return <Page onRefresh={() => { leagues.reload(); resource.reload(); }} refreshing={leagues.loading || resource.loading}><Title>The race for the top.</Title><Resource resource={leagues}>{!leagues.data?.length && <Empty message="No leagues yet. Your organizer will add them here." />}<View style={ui.row}>{leagues.data?.map(item => <Chip key={item.id} label={item.name} active={selected === item.id} onPress={() => setLeague(item.id)} />)}</View></Resource>
-    <Body>Swipe the table to see all stats. P played · W won · D drawn · L lost · diff score difference.</Body>
+  return <Page onRefresh={() => { leagues.reload(); resource.reload(); }} refreshing={leagues.loading || resource.loading}><Title>Standings</Title><Resource resource={leagues}>{!leagues.data?.length && <Empty message="No leagues yet. Your organizer will add them here." />}<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', gap: 10 }}>{leagues.data?.map(item => <Chip key={item.id} label={item.name} active={selected === item.id} onPress={() => setLeague(item.id)} />)}</ScrollView></Resource>
+    <Body>Swipe for more stats</Body>
     {(!online || leagues.data?.some(l => l.cached) || resource.data?.some(row => row.cached)) && <Badge label="Offline - cached" icon="cloud-offline-outline" />}
     <Resource resource={resource}>{!resource.data?.length ? <Empty message="Standings will appear after the first matches." /> : <ScrollView horizontal showsHorizontalScrollIndicator accessibilityLabel="League standings, scroll horizontally"><View>
       <View style={[ui.row, { backgroundColor: colors.sand, padding: 12, paddingLeft: 15, flexWrap: 'nowrap' }]}>{['#', 'Team', 'P', 'W', 'D', 'L', 'diff', 'pts', 'Status'].map((label, index) => <Text key={label} style={[ui.badgeText, { width: columnWidth(index), flexShrink: 0 }]}>{label}</Text>)}</View>
       {resource.data.map((row, index) => <View key={row.team} accessible accessibilityLabel={`Rank ${index + 1}, ${row.team}. Played ${row.played}, won ${row.won}, drawn ${row.drawn}, lost ${row.lost}, difference ${row.diff}, points ${row.points}. ${row.status}.`} style={[ui.row, { flexWrap: 'nowrap', padding: 12, borderBottomWidth: 1, borderBottomColor: colors.sand, borderLeftWidth: 3, borderLeftColor: row.status === 'Clinched' ? colors.coral : colors.cream }]}>
-        {[index + 1, row.team, row.played, row.won, row.drawn, row.lost, row.diff, row.points].map((value, cell) => <Text key={cell} style={[ui.body, { width: columnWidth(cell), flexShrink: 0 }]}>{value}</Text>)}
+        {[index + 1, row.team, row.played, row.won, row.drawn, row.lost, row.diff, row.points].map((value, cell) => <Text key={cell} numberOfLines={cell === 1 ? 1 : undefined} style={[ui.body, { width: columnWidth(cell), flexShrink: 0 }]}>{value}</Text>)}
         <View style={{ width: columnWidth(8) }}><Badge label={row.status} icon={row.status === 'Clinched' ? 'trophy-outline' : row.status === 'Eliminated' ? 'close-circle-outline' : 'hourglass-outline'} /></View>
       </View>)}
     </View></ScrollView>}</Resource>

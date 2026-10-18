@@ -20,7 +20,7 @@ export function Page({ children, onRefresh, refreshing = false }: React.PropsWit
   </KeyboardAvoidingView>;
 }
 export function Badge({ label, icon = 'information-circle-outline', live = false }: { label: string; icon?: IconName; live?: boolean }) {
-  return <View style={[ui.badge, live && { backgroundColor: tenant.primary }]} accessible accessibilityLabel={label}><Icon name={icon} size={17} /><Text style={ui.badgeText}>{label}</Text></View>;
+  return <View style={[ui.badge, live && { backgroundColor: tenant.primary }]} accessible accessibilityLabel={label}><Icon name={icon} size={14} /><Text style={ui.badgeText}>{label}</Text></View>;
 }
 export function Chip({ label, active, onPress, disabled = false }: { label: string; active?: boolean; onPress: () => void; disabled?: boolean }) {
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active, disabled }} disabled={disabled} onPress={onPress}
@@ -50,15 +50,15 @@ export function SyncPill({ onPress }: { onPress: () => void }) {
   </Pressable>;
 }
 export const ui = StyleSheet.create({
-  page: { padding: 20, gap: 18, flexGrow: 1, backgroundColor: colors.cream },
-  title: { fontFamily: 'Sora_700Bold', color: colors.forest, fontSize: 27 },
-  body: { fontFamily: 'Inter_400Regular', color: colors.forest, fontSize: 16, lineHeight: 24, flexShrink: 1 },
-  card: { minHeight: 48, maxWidth: '100%', borderRadius: 22, borderWidth: 1, borderColor: colors.sand, backgroundColor: colors.cream, padding: 18, gap: 12 },
+  page: { padding: 16, gap: 12, flexGrow: 1, backgroundColor: colors.cream },
+  title: { fontFamily: 'Sora_700Bold', color: colors.forest, fontSize: 21, lineHeight: 27 },
+  body: { fontFamily: 'Inter_400Regular', color: colors.forest, fontSize: 14, lineHeight: 20, flexShrink: 1 },
+  card: { minHeight: 48, maxWidth: '100%', borderRadius: 16, borderWidth: 1, borderColor: colors.sand, backgroundColor: colors.cream, padding: 14, gap: 8 },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
-  badge: { maxWidth: '100%', alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.sand, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 },
-  badgeText: { fontFamily: 'Inter_600SemiBold', color: colors.forest, fontSize: 16, flexShrink: 1 },
-  chip: { minHeight: 48, minWidth: 48, maxWidth: '100%', paddingHorizontal: 17, paddingVertical: 12, borderRadius: 28, backgroundColor: colors.sand, justifyContent: 'center' },
-  sync: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, borderRadius: 24, backgroundColor: colors.sand },
-  count: { borderRadius: 14, backgroundColor: tenant.primary, paddingHorizontal: 7, color: colors.forest, fontFamily: 'Inter_600SemiBold', fontSize: 16 },
-  score: { fontFamily: 'Sora_800ExtraBold', fontSize: 54, color: colors.forest, textAlign: 'center' },
+  badge: { maxWidth: '100%', alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.sand, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 },
+  badgeText: { fontFamily: 'Inter_600SemiBold', color: colors.forest, fontSize: 13, flexShrink: 1 },
+  chip: { minHeight: 44, minWidth: 44, maxWidth: '100%', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 22, backgroundColor: colors.sand, justifyContent: 'center' },
+  sync: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, borderRadius: 24, backgroundColor: colors.sand },
+  count: { borderRadius: 14, backgroundColor: tenant.primary, paddingHorizontal: 6, color: colors.forest, fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  score: { fontFamily: 'Sora_800ExtraBold', fontSize: 42, color: colors.forest, textAlign: 'center' },
 });

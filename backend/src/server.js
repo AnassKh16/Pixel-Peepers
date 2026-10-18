@@ -19,12 +19,15 @@ try {
   await pool.query(schema);
   await resetDatabase(pool, redis);
   stopOrderPublisher = startOrderPublisher(pool, redis);
-  server = createApp(pool, redis, undefined, sign).listen(8080, '0.0.0.0', () => console.log('Listening on 0.0.0.0:8080'));
+  const app=createApp(pool,redis,undefined,sign);
+  server = app.listen(8080, '0.0.0.0', () => console.log('Listening on 0.0.0.0:8080'));
+  app.locals.scoreStreams.attach(server);
+  server.scoreStreams=app.locals.scoreStreams;
 } catch (error) {
   console.error('Startup failed:', error.message);
   process.exit(1);
 }
 for (const signal of ['SIGINT','SIGTERM']) process.on(signal, () => {
   stopOrderPublisher();
-  server.close(async () => { await redis.quit(); await pool.end(); process.exit(0); });
+  server.scoreStreams.close().finally(()=>server.close(async () => { await redis.quit(); await pool.end(); process.exit(0); }));
 });

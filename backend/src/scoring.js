@@ -1,3 +1,4 @@
+import {scoreView} from './score-view.js';
 import { canonical } from './signature.js';
 import { DomainError, isObject, validId, validationError } from './validation.js';
 
@@ -131,6 +132,10 @@ export async function appendEvent(pool, sign, body, {baseVersion} = {}) {
     const sequence = records.length + 1;
     const response = {event_id: request.event_id, match_id: request.match_id, type: request.type, sequence, match_version: sequence, signature: sign(request.event_id, payload)};
     await client.query('INSERT INTO events(event_id,match_id,sequence,data) VALUES ($1,$2,$3,$4)', [request.event_id, request.match_id, sequence, {request, response}]);
+    const update=scoreView(projectScore(request.match_id,meta,config,[...records,{request,response}]));
+    if(['upcoming','in_progress','completed','postponed','cancelled','abandoned'].includes(meta.status))update.status=meta.status;
+    // NOTIFY is delivered only on COMMIT, across all API processes and offline sync.
+    await client.query("SELECT pg_notify('nascon_scores',$1)",[JSON.stringify(update)]);
     await client.query('COMMIT');
     return {status: 201, response, previous_version: records.length};
   } catch (error) {

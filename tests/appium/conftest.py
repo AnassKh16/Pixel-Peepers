@@ -4,6 +4,7 @@ import subprocess
 import pytest
 from appium import webdriver
 from appium.options.android import UiAutomator2Options
+from selenium.common.exceptions import WebDriverException
 
 
 APP_PACKAGE = "com.skorly.mobile"
@@ -34,7 +35,10 @@ def mobile_driver():
     options.set_capability("appPackage", APP_PACKAGE)
     options.set_capability("appActivity", APP_ACTIVITY)
     options.set_capability("noReset", True)
-    driver = webdriver.Remote(APPIUM_URL, options=options)
+    try:
+        driver = webdriver.Remote(APPIUM_URL, options=options)
+    except WebDriverException as error:
+        pytest.skip(f"Appium is unavailable: {error.msg}")
     try:
         yield driver
     finally:

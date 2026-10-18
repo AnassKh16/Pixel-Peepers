@@ -3,3 +3,7 @@ node_modules/
 *.log
 /Downloads/
 /backend/.spec-text.txt
+
+__pycache__/
+*.pyc
+/backend/.npm-cache/

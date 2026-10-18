@@ -1,3 +1,10 @@
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {guestWriteBoundary} from './guest-boundary.js';
+import {mergeGuestCart} from './guest-cart.js';
+import {resolveQr,resolveShortCode,exportQr} from './qr.js';
+import {publicRouter} from './public-api.js';
+import {ScoreStreams} from './score-streams.js';
 import {manageStreamKey, authorizeMedia, mediaReady} from './streaming.js';
 import {manageSession} from './costream.js';
 import {validateSync,syncActions} from './offline-sync.js';
@@ -21,6 +28,10 @@ const errorBody = (code, message, details = {}) => ({error: {code, message, deta
 export function createApp(pool, redis, tokens = createTokenService(), sign) {
   const app = express();
   app.disable('x-powered-by');
+  const streams=new ScoreStreams(pool,tokens);app.locals.scoreStreams=streams;
+  app.use((_req,res,next)=>{res.set('Access-Control-Allow-Origin','*');res.set('Access-Control-Allow-Headers','Authorization, Content-Type');res.set('Access-Control-Allow-Methods','GET, POST, PATCH, DELETE, OPTIONS');res.set('Access-Control-Expose-Headers','Retry-After');next();});
+  app.use('/api/v1',rateLimit(redis));
+  app.use(guestWriteBoundary);
   const json = express.json({limit: '1mb', strict: false, type: () => true});
   const probe = (method, path, action, kind) => app[method](path, async (req, res, next) => {
     const user = tokens.verify(req.headers.authorization);
@@ -39,10 +50,24 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   probe('patch', '/audit/v1/rbac/players/:id', 'player', 'player');
   probe('get', '/audit/v1/rbac/clubs/:id', 'club', 'club');
   probe('get', '/audit/v1/rbac/platform/config', 'config');
-  app.use('/api/v1', (_req,res,next)=>{res.set('Access-Control-Allow-Origin','*');res.set('Access-Control-Allow-Headers','Authorization, Content-Type');res.set('Access-Control-Allow-Methods','GET, POST, OPTIONS');res.set('Access-Control-Expose-Headers','Retry-After');next();});
-  app.use('/api/v1', rateLimit(redis));
+  app.use('/api/v1',publicRouter(pool,tokens,json,streams));
   app.use('/api/v1', mobileRouter(pool,redis,tokens,sign,json));
   app.use(json);
+  app.get('/audit/v1/qr/:entity_id/export.:format',async(req,res,next)=>{
+    try{const result=await exportQr(pool,req.params.entity_id,req.params.format);res.set('Content-Type',result.type);res.set('Cache-Control','no-store');res.end(result.body);}catch(error){next(error);}
+  });
+  app.get('/audit/v1/qr/:entity_id',async(req,res,next)=>{
+    try{res.set('Cache-Control','no-store').json(await resolveQr(pool,req.params.entity_id,{inspect:req.query.inspect==='true',userAgent:req.headers['user-agent']}));}catch(error){next(error);}
+  });
+  app.get('/q/:short_code',async(req,res,next)=>{
+    try{const qr=await resolveShortCode(pool,req.params.short_code,{userAgent:req.headers['user-agent']});res.set('Cache-Control','no-store').redirect(302,qr.target_route);}catch(error){next(error);}
+  });
+  app.post('/audit/v1/guest/cart-merge',async(req,res,next)=>{
+    try{res.json(await mergeGuestCart(pool,req.body));}catch(error){next(error);}
+  });
+  const webDirectory=fileURLToPath(new URL('../web/',import.meta.url));
+  app.use('/web',express.static(webDirectory));
+  app.get('/web/*',(_req,res,next)=>res.sendFile(path.join(webDirectory,'index.html'),error=>{if(error)next(error);}));
   app.post('/audit/v1/stream/key', async (req,res,next) => {
     try {const result=await manageStreamKey(pool,req.body);res.status(result.status).json(result.response);}catch(error){next(error);}
   });

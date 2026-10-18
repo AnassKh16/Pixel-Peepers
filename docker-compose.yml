@@ -9,7 +9,12 @@ services:
       DATABASE_URL: postgresql://nascon:nascon@postgres:5432/nascon
       REDIS_URL: redis://redis:6379
       MEDIA_API_URL: http://mediamtx:9997
+      MINIO_URL: http://minio:9000
+    volumes:
+      - ./backend/web:/app/web:ro
     depends_on:
+      minio:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
@@ -59,6 +64,22 @@ services:
       - ./backend/mediamtx.yml:/mediamtx.yml:ro
     healthcheck:
       test: ["CMD", "/bin/busybox", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9997/v3/paths/list"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    restart: unless-stopped
+  minio:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.minio
+    image: pixel-peepers-minio:latest
+    command: ["server", "/data"]
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "/bin/busybox", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9000/minio/health/live"]
       interval: 2s
       timeout: 3s
       retries: 60
@@ -116,3 +137,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  minio_data:

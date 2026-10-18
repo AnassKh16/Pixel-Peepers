@@ -1,0 +1,83 @@
+{
+  "verified_at_utc": "2026-10-18T06:55:40.2227859Z",
+  "command": "sh ./run_tests.sh",
+  "tests": {
+    "total": 443,
+    "passed": 443,
+    "failed": 0,
+    "skipped": 0,
+    "previous_tests_preserved": 377,
+    "added_b2_tests": 66,
+    "duration_ms": 91813.835454
+  },
+  "score_delivery": {
+    "websocket_clients": 25,
+    "websocket_p95_ms": 17.0,
+    "cross_process_sse_ms": 20.9,
+    "threshold_ms": 100
+  },
+  "health": {
+    "backend_http_status": 200,
+    "minio_http_status": 200,
+    "grid_ready": true,
+    "grid_nodes": 3,
+    "services": [
+      {
+        "Service": "backend",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "mediamtx",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "minio",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "node-chrome-1",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "node-chrome-2",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "node-firefox",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "postgres",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "redis",
+        "State": "running",
+        "Health": "healthy"
+      },
+      {
+        "Service": "selenium-hub",
+        "State": "running",
+        "Health": "healthy"
+      }
+    ]
+  },
+  "coverage": {
+    "fixtures": 100,
+    "scoring": 99.23,
+    "standings": 99.16,
+    "store": 98.83,
+    "roster": 100,
+    "rbac": 100
+  },
+  "salts": "Provided through process environment only; no salt values recorded",
+  "log": "DAY2_B2_TEST_RESULTS.log",
+  "protected_paths": "No edits to backend/web/, mobile/, root tests/, or .github/; no git commands"
+}

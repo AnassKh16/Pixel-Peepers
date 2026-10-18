@@ -59,6 +59,18 @@ CREATE TABLE IF NOT EXISTS costream_sessions (session_id text PRIMARY KEY, data 
 CREATE TABLE IF NOT EXISTS qr_mappings (entity_id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS guest_tokens (guest_token text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS user_carts (user_id text PRIMARY KEY, data jsonb NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS qr_short_code_unique ON qr_mappings((data->>'short_code'));
+CREATE TABLE IF NOT EXISTS qr_scan_telemetry (entity_id text NOT NULL REFERENCES qr_mappings, device_family text NOT NULL CHECK(device_family IN ('mobile','desktop')), utc_hour timestamptz NOT NULL, scan_count bigint NOT NULL DEFAULT 0, PRIMARY KEY(entity_id,device_family,utc_hour));
+CREATE TABLE IF NOT EXISTS chat_rooms (chat_room_id text PRIMARY KEY, last_sequence integer NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS chat_messages (chat_room_id text NOT NULL REFERENCES chat_rooms, message_id text NOT NULL, sequence integer NOT NULL, data jsonb NOT NULL, request jsonb NOT NULL, PRIMARY KEY(chat_room_id,message_id), UNIQUE(chat_room_id,sequence));
+CREATE OR REPLACE FUNCTION notify_match_status_change() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM pg_notify('nascon_scores',json_build_object('match_id',NEW.match_id,'refresh',true)::text);
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS matches_status_notify ON matches;
+CREATE TRIGGER matches_status_notify AFTER UPDATE OF data ON matches FOR EACH ROW WHEN (OLD.data->>'status' IS DISTINCT FROM NEW.data->>'status') EXECUTE FUNCTION notify_match_status_change();
 CREATE TABLE IF NOT EXISTS offline_sync (device_id text NOT NULL, action_id text NOT NULL, data jsonb NOT NULL, PRIMARY KEY(device_id, action_id));
 `;
 
@@ -71,7 +83,7 @@ export async function resetDatabase(pool, redis, body = {}, sign = demoSigner) {
     // Serialize resets across callers and application instances.
     await client.query('SELECT pg_advisory_xact_lock(5505)');
     await client.query('ALTER SEQUENCE roster_audit_seq RESTART WITH 1');
-    await client.query('TRUNCATE creator_streams, stream_keys, costream_sessions, qr_mappings, guest_tokens, user_carts, club_profiles, player_profiles, product_profiles, roster_requests, roster_history, offline_sync, order_outbox, orders, rosters, events, matches, users, variants, products, discounts, players, clubs, leagues, sports, tenants, app_state');
+    await client.query('TRUNCATE qr_scan_telemetry, chat_messages, chat_rooms, creator_streams, stream_keys, costream_sessions, qr_mappings, guest_tokens, user_carts, club_profiles, player_profiles, product_profiles, roster_requests, roster_history, offline_sync, order_outbox, orders, rosters, events, matches, users, variants, products, discounts, players, clubs, leagues, sports, tenants, app_state');
     for (const [id, name] of [['tenant-alpha', 'Alpha Sports'], ['tenant-beta', 'Beta Athletics']]) {
       await client.query('INSERT INTO tenants VALUES ($1,$2)', [id, name]);
     }
@@ -100,6 +112,7 @@ export async function resetDatabase(pool, redis, body = {}, sign = demoSigner) {
     await client.query('INSERT INTO app_state VALUES ($1,$2),($3,$4)', ['seed',JSON.stringify(seed),'baseline_seeded','true']);
     // Redis is dedicated to this application; clear transient state on reset.
     await redis.flushDb();
+    await client.query("SELECT pg_notify('nascon_scores',$1)",[JSON.stringify({reset:true})]);
     await client.query('COMMIT');
     return {status: 'reset_complete', seed, sports: sports.map(s => s.sport_id), tenants: ['tenant-alpha','tenant-beta'], stock};
   } catch (error) {

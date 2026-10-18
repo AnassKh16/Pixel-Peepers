@@ -161,3 +161,22 @@ A roster action is available only to the source club's manager or the administra
 Use this as `payload` with action type `roster_action`. Supported mutations: `transfer`, `loan` (also requires `loan_end_date` later than effective_date), `release` (`to_squad_id` is null/omitted). Dates are YYYY-MM-DD. `requested_by` is assigned by the server. A successful mutation records the dated registration and an immutable audit history row; offline results expose the new roster version with null signature. If the old squad has a live match, its player eligibility is retained for that match and the change is marked deferred_until_match_end. Loans return automatically on the day after loan_end_date; the audit history endpoint materializes that return once. Transfers/loans enforce the configured window, capacity and required positions; source membership and cross-tenant constraints apply. Domain errors include `LEAGUE_NOT_FOUND`, `SQUAD_NOT_FOUND`, `PLAYER_NOT_FOUND`, `NOT_IN_SQUAD`, `TRANSFER_WINDOW_CLOSED`, `PLAYER_ON_LOAN`, `SQUAD_FULL`, `MIN_POSITION_VIOLATION`, `CROSS_TENANT_TRANSFER`, `DUPLICATE_REQUEST_ID`, `INVALID_BASE_VERSION`. Read `/clubs/{id}` again after a successful sync to refresh the roster.
 
 The unauthenticated audit routes `/audit/v1/roster/setup`, `/audit/v1/roster/transfer`, `/audit/v1/roster/history/{player_id}?as_of=YYYY-MM-DD`, and `/audit/v1/offline-sync` implement the binding Sections 5.11 and 5.14 shapes. The audit sync envelope uses `roster_transfer` and returns `error_code`, per-result `processed_order`, and the applied/rejected/duplicate summary. The production mobile queue retains its documented `roster_action` and response format through a presentation adapter over the same domain services. A fresh roster setup replaces the league's active scenario; older history rows remain immutable and belong to the prior scenario generation.
+## Day 2 guest web API (B2)
+
+The guest routes now work without Authorization or with a guest_anon_tok_* token; no login wall is required for public reads. Existing JWT member responses and tenant checks remain intact. See [DAY2_B2.md](DAY2_B2.md) for complete JSON shapes and error behavior.
+
+| Route | Guest response |
+|---|---|
+| GET /api/v1/matches/{id} | Public score view with match_id, status, home, away, version and score string (`1 - 0`). Member JWTs keep the original Day 1 score body. |
+| GET /api/v1/matches/{id}/summary | `{match_id,status,home,away,score}`. |
+| GET /api/v1/matches/{id}/stream | SSE initial/current score; named score and standard message events carry the same version. |
+| WS /ws/matches/{id} | `{type:"score",...scoreView,data:scoreView}`. |
+| GET /api/v1/costream/{id} | Session state, participants, layout, composite_playback_url and chat_room_id. |
+| GET /api/v1/chat?chat_room_id=chat-{session_id} | `{chat_room_id,messages:[{message_id,sender,text,sequence,flagged,reason,created_at,...}]}`. Text is already moderated. |
+| GET /api/v1/products | `{products:[{product_id,club_id,name,description,category,variants:[{variant_id,size,color,price_minor,currency,stock}]}]}`. |
+| GET /api/v1/players/{id} | `{player_id,club_id,name,position}`. |
+| GET /api/v1/clubs/{id} | Public club profile, venue, social handles, staff and roster; private contacts and registration details are omitted. |
+| POST /api/v1/guest/token | 201 `{guest_token,role:"guest",read_only:true,expires_at}`. |
+| POST /api/v1/chat | Member JWT required. Body `{session_id,text,message_id?}` or `{chat_room_id,text,message_id?}`; 201 stored message with sequence. Guests/no token get 403 GUEST_WRITE_FORBIDDEN. |
+
+All /api/v1 routes retain the shared 100 requests/rolling 10 seconds/IP limiter. Login remains POST /api/v1/auth/login. The binding guest merge flow is POST /audit/v1/guest/cart-merge (Section 5.7); it returns the signed active_cart without reserving stock or duplicating replayed quantities.

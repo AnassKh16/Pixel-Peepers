@@ -9,5 +9,7 @@ const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:10,connect
 const redis=createClient({url:process.env.REDIS_URL});redis.on('error',error=>console.error('Test Redis:',error.message));
 await redis.connect();await pool.query(schema);await resetDatabase(pool,redis);
 const stopPublisher=startOrderPublisher(pool,redis);
-const server=createApp(pool,redis,undefined,sign).listen(8081,'127.0.0.1',()=>process.send({ready:true}));
-process.on('SIGTERM',()=>{stopPublisher();server.close(async()=>{await redis.quit();await pool.end();process.exit(0);});});
+const app=createApp(pool,redis,undefined,sign);
+const server=app.listen(8081,'127.0.0.1',()=>process.send({ready:true}));
+app.locals.scoreStreams.attach(server);
+process.on('SIGTERM',()=>{stopPublisher();app.locals.scoreStreams.close().finally(()=>server.close(async()=>{await redis.quit();await pool.end();process.exit(0);}));});

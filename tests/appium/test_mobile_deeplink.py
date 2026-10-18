@@ -4,7 +4,8 @@ import pytest
 from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.support.ui import WebDriverWait
 
-from conftest import APP_PACKAGE
+
+APP_PACKAGE = "com.skorly.mobile"
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,8 @@
+FROM node:20-alpine AS health-tools
+FROM cgr.dev/chainguard/minio:latest
+COPY --from=health-tools /bin/busybox /bin/busybox
+COPY --from=health-tools /lib/ /lib/
+USER 0
+RUN ["/bin/busybox", "mkdir", "-p", "/data"]
+RUN ["/bin/busybox", "chown", "65532:65532", "/data"]
+USER 65532:65532

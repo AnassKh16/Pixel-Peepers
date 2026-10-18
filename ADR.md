@@ -103,6 +103,54 @@ Status values: Proposed | Accepted | Superseded by ADR-NNN
 
 ---
 
+## ADR-009: MediaMTX over LiveKit for media transport
+- **Date:** 2026-10-18
+- **Status:** Accepted
+- **Context:** The streaming stack needs one pre-pulled container that supports RTMP ingest, HLS playback, and WHIP.
+- **Decision:** We chose **MediaMTX over LiveKit**.
+- **Alternatives considered:** LiveKit and a multi-service media pipeline.
+- **Why:** `docker-compose.yml` runs one `mediamtx` service, while `backend/Dockerfile.mediamtx` supplies the pre-pulled image used for RTMP, HLS, and WHIP endpoints.
+- **Consequences:** Deployment stays small and predictable; the team owns the MediaMTX configuration and its operational limits.
+- **Related requirements:** FR-3.2, Section 6.1 media ports, and Section 6.5.
+
+---
+
+## ADR-010: Plain HTML and JavaScript for the guest web player
+- **Date:** 2026-10-18
+- **Status:** Accepted
+- **Context:** Guests need a zero-install player with stable DOM hooks and no frontend build step.
+- **Decision:** We chose **plain HTML and vanilla JavaScript served by Express over a React build**.
+- **Alternatives considered:** A React single-page application and a separate static frontend build.
+- **Why:** The Express web routes in `backend/src/app.js` serve the player directly, so `data-testid` attributes remain guaranteed without a build pipeline.
+- **Consequences:** Guests load the player immediately and CI stays simple; the frontend team manages DOM behavior directly rather than relying on a component build.
+- **Related requirements:** FR-4.2, Section 6.2.2, and Section 6.2.3.
+
+---
+
+## ADR-011: SSE and WebSocket score delivery over polling
+- **Date:** 2026-10-18
+- **Status:** Accepted
+- **Context:** Live scores must reach browsers quickly enough for the low-latency requirement.
+- **Decision:** We chose **SSE and WebSocket push over client polling**.
+- **Alternatives considered:** Short-interval HTTP polling and periodic full-page refreshes.
+- **Why:** `backend/src/app.js` exposes the live web surface and `backend/src/scoring.js` provides the event-driven score projection used by push delivery; push avoids repeated polling requests and targets NFR-1 p95 below 500 ms.
+- **Consequences:** Updates are low-latency and more efficient under load; connection lifecycle and reconnect behavior must be maintained.
+- **Related requirements:** FR-1.1, FR-5.2, and NFR-1.
+
+---
+
+## ADR-012: PostgreSQL-backed dead-letter queue
+- **Date:** 2026-10-18
+- **Status:** Accepted
+- **Context:** Failed notifications must survive restarts and retry safely without deadlocks.
+- **Decision:** We chose **a PostgreSQL-backed DLQ with bounded retries over an in-memory queue**.
+- **Alternatives considered:** An in-memory process queue and an unbounded retry loop.
+- **Why:** `backend/src/database.js` provides durable transactional storage, while `backend/src/order-events.js` demonstrates the repository’s persistent outbox and retry pattern that can be inspected and coordinated safely.
+- **Consequences:** Failed work survives process restarts and retry counts remain bounded; PostgreSQL storage adds writes and requires careful transaction ordering to avoid deadlocks.
+- **Related requirements:** FR-5.2, Section 5.8, and NFR-3.
+
+---
+
 <!--
 Typical decisions worth recording (pick what the problem actually needs):
 backend framework, database, cache/queue/broker, file storage (MinIO replacement),

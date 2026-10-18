@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=optional
 COPY src ./src
+COPY web ./web
 COPY test ./test
 COPY scripts ./scripts
 COPY test-support ./test-support

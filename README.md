@@ -6,7 +6,7 @@ DAY1_SALT=<day1-salt> DAY2_SALT=<day2-salt> docker compose up -d --build
 curl http://localhost:8080/health
 ```
 
-API: `http://localhost:8080`. Day 2 B1 contracts, infrastructure, and test notes: [DAY2_B1.md](DAY2_B1.md).
+API: `http://localhost:8080`. Day 2 backend notes: [B1 streaming and Grid](DAY2_B1.md), [B2 guest web API, QR, carts and score push](DAY2_B2.md).
 Mobile app: `mobile/release/app-release.apk`.
 Server address is editable in the app's Settings screen (default http://192.168.137.1:8080; emulator 10.0.2.2:8080).
 

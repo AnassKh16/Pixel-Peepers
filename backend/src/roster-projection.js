@@ -1,7 +1,9 @@
+import {redactRecord} from './privacy.js';
 import {nextDay} from './roster-rules.js';
 export const generation=scenario=>scenario.generation??'baseline';
-export async function rosterEntries(client,scenario,player) {
-  return (await client.query("SELECT data FROM roster_history WHERE league_id=$1 AND data->>'generation'=$2 AND ($3::text IS NULL OR player_id=$3) ORDER BY entry_sequence",[scenario.league.league_id,generation(scenario),player??null])).rows.map(r=>r.data);
+export async function rosterEntries(client,scenario,player,{raw=false,privacyPool=client}={}) {
+  const records=(await client.query("SELECT data FROM roster_history WHERE league_id=$1 AND data->>'generation'=$2 AND ($3::text IS NULL OR player_id=$3) ORDER BY entry_sequence",[scenario.league.league_id,generation(scenario),player??null])).rows.map(r=>r.data);
+  return raw?records:redactRecord(records,privacyPool);
 }
 // A query for a future date must not corrupt subsequent historical reads.
 export function projectRoster(scenario,history,asOf) {

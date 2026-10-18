@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {registerB3Routes} from './day2-b3-routes.js';
 import {fileURLToPath} from 'node:url';
 import {guestWriteBoundary} from './guest-boundary.js';
 import {mergeGuestCart} from './guest-cart.js';
@@ -33,6 +34,8 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   app.use('/api/v1',rateLimit(redis));
   app.use(guestWriteBoundary);
   const json = express.json({limit: '1mb', strict: false, type: () => true});
+  Object.defineProperty(app.locals,'activeWsConnections',{get:()=>[...streams.listeners.values()].reduce((n,sinks)=>n+sinks.size,0)});
+  const {privacy}=registerB3Routes(app,{pool,json});
   const probe = (method, path, action, kind) => app[method](path, async (req, res, next) => {
     const user = tokens.verify(req.headers.authorization);
     if (!user) return res.status(401).json(errorBody('UNAUTHENTICATED', 'Valid bearer token required'));
@@ -142,7 +145,7 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
     }catch(error){next(error);}
   });
   app.get('/audit/v1/roster/history/:player_id', async (req,res,next) => {
-    try {res.json(await rosterHistory(pool,req.params.player_id,req.query.as_of));}catch(error){next(error);}
+    try {res.json(await privacy.redactRecord(await rosterHistory(pool,req.params.player_id,req.query.as_of)));}catch(error){next(error);}
   });
   app.post('/audit/v1/offline-sync', async (req,res,next) => {
     try {res.json(await syncActions(pool,sign,null,validateSync(req.body)));}catch(error){next(error);}

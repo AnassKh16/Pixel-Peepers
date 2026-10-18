@@ -1,3 +1,4 @@
+import {redactRecord} from './privacy.js';
 import {getScore} from './scoring.js';
 import {scoreView} from './score-view.js';
 import {permits} from './policy.js';
@@ -40,7 +41,7 @@ export async function publicClub(pool,id) {
   if(!row)throw new DomainError(404,'CLUB_NOT_FOUND','Club does not exist');
   const p=row.data??{};
   const roster=(await pool.query('SELECT data FROM rosters')).rows.flatMap(({data})=>data.players.filter(player=>data.squads.some(s=>s.club_id===id&&s.squad_id===player.squad_id)).map(player=>({player_id:player.player_id,name:player.name,position:player.position,role:player.role})));
-  return {club_id:id,name:p.name??id,description:p.description??'',home_venue:p.home_venue?Object.fromEntries(['name','address','latitude','longitude'].filter(key=>p.home_venue[key]!==undefined).map(key=>[key,p.home_venue[key]])):null,social_handles:p.social_handles??{},staff:(p.staff??[]).map(person=>({name:person.name,role:person.role})),roster};
+  return {club_id:id,name:p.name??id,description:p.description??'',home_venue:p.home_venue?Object.fromEntries(['name','address','latitude','longitude'].filter(key=>p.home_venue[key]!==undefined).map(key=>[key,p.home_venue[key]])):null,social_handles:p.social_handles??{},staff:(p.staff??[]).map(person=>({name:person.name,role:person.role})),roster:await redactRecord(roster,pool)};
 }
 
 export async function publicProducts(pool) {

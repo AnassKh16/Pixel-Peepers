@@ -42,12 +42,20 @@ export function registerB3Routes(app, deps) {
     } catch(error) {next(error);}
   });
   const scalar = async sql => Number((await pool.query(sql)).rows[0].count);
+  let mediaSample;
   const metrics = {
     activeWsConnections: () => Number(app.locals?.activeWsConnections ?? 0),
     activeStreams: () => scalar(`SELECT
       (SELECT count(*) FROM stream_keys WHERE status='active') +
-      (SELECT count(*) FROM costream_sessions WHERE data->>'status'='active') AS count`),
-    streamBitrateKbps: () => Number(app.locals?.streamBitrateKbps ?? 0),
+      (SELECT count(*) FROM costream_sessions WHERE data->'response'->>'status'='active') AS count`),
+    streamBitrateKbps: async () => {
+      const response=await fetch(`${process.env.MEDIA_API_URL ?? 'http://mediamtx:9997'}/v3/paths/list?itemsPerPage=1000`,{signal:AbortSignal.timeout(1500)});
+      if(!response.ok)throw new DomainError(503,'NOT_READY','Media measurements unavailable');
+      const body=await response.json(),now=performance.now();
+      const bytes=body.items.reduce((n,path)=>n+Number(path.bytesReceived??0),0);
+      const rate=mediaSample?Math.max(0,bytes-mediaSample.bytes)*8/(now-mediaSample.time):0;
+      mediaSample={bytes,time:now};return rate;
+    },
     dlqDepth: () => dlq.depth(),
     qrScans: () => scalar("SELECT COALESCE(sum((data->>'scan_count')::bigint),0) AS count FROM qr_mappings"),
     ...deps.metrics,
@@ -82,7 +90,7 @@ export function registerB3Routes(app, deps) {
       signature: sign(body.chat_room_id, payload)});
   });
   route('get', '/metrics', async (_req, res) => {
-    res.set('Content-Type', METRICS_CONTENT_TYPE).status(200).send(await renderMetrics(metrics));
+    res.set('Content-Type', METRICS_CONTENT_TYPE).status(200).send(Buffer.from(await renderMetrics(metrics)));
   });
   route('delete', '/audit/v1/privacy/user/:user_id', async (req, res) => {
     res.status(200).json(await erase(req.params.user_id));

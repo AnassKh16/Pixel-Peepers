@@ -42,7 +42,7 @@ export async function changeRoster(pool,body,{baseVersion}={}) {
       if(canonical(prior.request)!==canonical(request))fail('DUPLICATE_REQUEST_ID','Request id already used');
       await client.query('COMMIT');return {status:200,response:prior.response};
     }
-    const history=await rosterEntries(client,scenario),previous_version=await rosterVersion(client,request.league_id,request.player_id);
+    const history=await rosterEntries(client,scenario,undefined,{raw:true}),previous_version=await rosterVersion(client,request.league_id,request.player_id);
     if(!scenario.players.some(p=>p.player_id===request.player_id))fail('PLAYER_NOT_FOUND','Player not found',404);
     if(!scenario.squads.some(s=>s.squad_id===request.from_squad_id)||(request.type!=='release'&&!scenario.squads.some(s=>s.squad_id===request.to_squad_id)))fail('SQUAD_NOT_FOUND','Squad not found',404);
     if(baseVersion!==undefined&&baseVersion>previous_version)fail('INVALID_BASE_VERSION','Base version exceeds server version');
@@ -83,7 +83,7 @@ export async function rosterHistory(pool,playerId,asOf=today()) {
     await client.query('SELECT pg_advisory_xact_lock(518,hashtext($1))',[row.roster_id]);
     const scenario=(await client.query('SELECT data FROM rosters WHERE roster_id=$1 FOR UPDATE',[row.roster_id])).rows[0].data;
     if(!scenario.players.some(p=>p.player_id===playerId))fail('PLAYER_NOT_FOUND','Player not found',404);
-    let history=await rosterEntries(client,scenario,playerId),inserted=false;
+    let history=await rosterEntries(client,scenario,playerId,{raw:true}),inserted=false;
     for(const loan of history.filter(h=>h.audit_entry.action==='loan'&&nextDay(h.after.loan_end_date)<=asOf)){
       if(history.some(h=>h.source_loan_id===loan.audit_entry.audit_id))continue;
       const effective_date=nextDay(loan.after.loan_end_date),after={...loan.before,squad_id:loan.after.parent_squad_id,role:'substitute',parent_squad_id:null,registration_type:'transfer',start_date:effective_date,loan_end_date:null};
@@ -91,7 +91,7 @@ export async function rosterHistory(pool,playerId,asOf=today()) {
       const record={generation:generation(scenario),audit_entry,before:loan.after,after,source_loan_id:loan.audit_entry.audit_id};
       await client.query('INSERT INTO roster_history(audit_id,player_id,league_id,data) VALUES ($1,$2,$3,$4)',[audit_entry.audit_id,playerId,row.roster_id,record]);history.push(record);inserted=true;
     }
-    const all=await rosterEntries(client,scenario),player=projectRoster(scenario,all,asOf).players.find(p=>p.player_id===playerId);
+    const all=await rosterEntries(client,scenario,undefined,{raw:true}),player=projectRoster(scenario,all,asOf).players.find(p=>p.player_id===playerId);
     if(inserted){const current=projectRoster(scenario,all,today());await client.query('UPDATE rosters SET data=$2 WHERE roster_id=$1',[row.roster_id,current]);await savePlayerClubs(client,current);}
     await client.query('COMMIT');
     return {player_id:playerId,as_of:asOf,league_id:row.roster_id,current_squad_id:player.squad_id,parent_squad_id:player.parent_squad_id??null,history:history.map(h=>h.audit_entry)};

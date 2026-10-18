@@ -1,3 +1,4 @@
+import {redactRecord} from './privacy.js';
 import express from 'express';
 import {compare} from 'bcryptjs';
 import {DomainError,isObject,validationError} from './validation.js';
@@ -78,7 +79,7 @@ export function mobileRouter(pool,redis,tokens,sign,json) {
     if(target&&!permits(req.actor,'club',target))denied();if(!target)throw new DomainError(404,'CLUB_NOT_FOUND','Club not found');
     const profile=(await pool.query('SELECT data FROM club_profiles WHERE club_id=$1',[req.params.id])).rows[0]?.data??{name:req.params.id,description:'',home_venue:null,social_handles:{},staff:[]};
     const registrations=(await pool.query('SELECT data FROM rosters')).rows.flatMap(({data})=>data.players.filter(p=>data.squads.some(s=>s.club_id===req.params.id&&s.squad_id===p.squad_id)).map(p=>({...p,league_id:data.league.league_id})));
-    res.json({...profile,...target,roster:registrations});
+    res.json({...profile,...target,roster:await redactRecord(registrations,pool)});
   });
   route('get','/products',async(req,res)=>{
     const rows=(await pool.query('SELECT p.*,pp.data AS profile FROM products p LEFT JOIN product_profiles pp USING(product_id) ORDER BY product_id')).rows.filter(p=>permits(req.actor,'catalogue',p));

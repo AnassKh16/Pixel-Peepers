@@ -157,3 +157,9 @@ backend framework, database, cache/queue/broker, file storage (MinIO replacement
 real-time transport, auth approach, mobile framework, test strategy, load-test tool,
 container layout / ports, how the app reaches the backend from a physical phone.
 -->
+
+## ADR-013: Read-time redaction over editing the audit log
+
+- **Status:** Accepted
+- **Decision:** We chose read-time redaction over editing the audit log because erasure must hide personal data while preserving the original event and roster audit records.
+- **Consequences:** Privacy records control response copies. Transfer calculations use original records, and audit IDs, ordering, signatures and append-only rows remain intact.

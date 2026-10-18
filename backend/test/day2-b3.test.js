@@ -293,7 +293,7 @@ test('metrics route returns declared content type and injected current measureme
   const response=await fixture.call('get','/metrics');
   assert.equal(response.statusCode,200);
   assert.equal(response.headers['Content-Type'],METRICS_CONTENT_TYPE);
-  assert.match(response.body,/nascon_stream_bitrate_kbps 1234\.5/);
+  assert.match(response.body.toString(),/nascon_stream_bitrate_kbps 1234\.5/);
 });
 test('privacy route delegates exact user id and returns standard 404', async () => {
   const fixture=appDouble();

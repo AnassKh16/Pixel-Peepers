@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="referrer" content="same-origin">
+<title>Skorly · Matchday, together</title>
+<link rel="stylesheet" href="/web/styles.css">
+<script defer src="/web/vendor/hls.min.js"></script><script defer src="/web/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to match</a>
+<header class="site-header"><a class="brand" href="/web/"><span class="brand-mark" aria-hidden="true">S</span>skorly<span class="brand-dot">.</span></a><span class="header-note">YOUR CLUB. YOUR PEOPLE.</span><span class="guest-pill">Guest access · no account needed</span></header>
+<main id="main" tabindex="-1">
+<div class="page-heading"><div><p class="eyebrow" id="page-kicker">THE MATCHDAY ROOM</p><h1 id="page-title">A front-row seat. For everyone.</h1><p id="page-description" class="subtitle">Watch the action, follow the score, and be part of the club.</p></div><span class="route-badge" id="route-badge">MATCH CENTRE</span></div>
+<section id="route-notice" class="notice" hidden aria-labelledby="notice-title"><h2 id="notice-title">Match update</h2><p id="notice-text"></p></section>
+<div id="watch-layout" class="watch-layout">
+<section class="watch-column" aria-label="Match stream">
+<div class="player-card">
+<div class="player-topline"><span id="stream-label">MATCH STREAM</span><span id="connection-status" role="status">Connecting to score feed…</span></div>
+<div class="video-shell">
+<video id="video" data-testid="guest-video-player" controls playsinline muted autoplay preload="metadata" aria-label="Match video player"></video>
+<div id="video-empty" class="video-empty"><span class="broadcast-icon" aria-hidden="true">◉</span><strong id="video-empty-title">Your seat is ready.</strong><span id="video-status" role="status">Waiting for a playable stream from the broadcaster.</span></div>
+</div>
+<div class="media-controls" aria-label="Video controls">
+<button id="play-toggle" type="button" aria-label="Play video">Play</button>
+<button id="mute-toggle" type="button" aria-label="Unmute video" aria-pressed="true">Unmute</button>
+<button id="fullscreen" type="button" aria-label="Enter video fullscreen">Full screen</button>
+<span class="media-hint">No download. Just matchday.</span>
+</div>
+<div class="scoreboard"><div class="team"><span class="club-badge" aria-hidden="true">H</span><span id="home-name">Home club</span></div><div class="score-centre"><span class="eyebrow" id="score-caption">MATCH SCORE</span><div data-testid="live-score-banner" id="score" aria-live="polite" aria-atomic="true">— - —</div></div><div class="team away"><span class="club-badge away-badge" aria-hidden="true">A</span><span id="away-name">Away club</span></div></div>
+</div>
+<div class="section-heading"><div><p class="eyebrow">FROM THE CLUB STORE</p><h2>Wear your colours.</h2></div><span class="small-label">PINNED TO THIS STREAM</span></div>
+<div class="merch-card" data-testid="pinned-merch-card" data-product-id="prod-jersey-001" data-variant-id="var-jersey-001-L">
+<div class="jersey-art" aria-hidden="true"><svg viewBox="0 0 200 180"><path d="M65 25 35 38 12 75 43 95 55 78v80h90V78l12 17 31-20-23-37-30-13c-9 20-61 20-70 0Z" fill="#184b3a"/><path d="M66 25c8 26 60 26 68 0l-13-6c-5 12-37 12-42 0Z" fill="#dcedaf"/><path d="M55 97h90v13H55z" fill="#dcedaf"/><path d="M68 122h64v7H68z" fill="#f4f1e8" opacity=".7"/><circle cx="122" cy="66" r="10" fill="#dcedaf"/></svg></div>
+<div class="merch-copy"><span class="tag">CLUB ORIGINALS · SIZE L</span><h3 id="product-name">Club home jersey</h3><p id="product-description">Take a little matchday home. Add it to your guest cart before signing in.</p><strong id="product-price">PKR 4,500.00</strong><p class="muted" id="cart-note" role="status">Your cart stays with you while you watch.</p></div>
+<div class="merch-actions"><button class="primary" data-testid="add-to-guest-cart-btn" id="add-cart" type="button">Add to guest cart <span aria-hidden="true">+</span></button><button id="checkout" type="button" class="secondary">Continue to checkout</button></div>
+</div>
+</section>
+<aside class="chat-card" aria-labelledby="chat-title">
+<div class="chat-heading"><div><p class="eyebrow">IN GOOD COMPANY</p><h2 id="chat-title">The touchline</h2></div><span class="chat-dot" aria-hidden="true"></span></div>
+<p class="chat-intro">A shared room for the whole crowd. Read along as a guest; sign in when you want to join in.</p>
+<div class="chat-list" data-testid="chat-message-list" id="chat-list" role="log" aria-label="Live moderated chat" aria-live="polite" aria-relevant="additions"><p class="chat-empty" id="chat-empty">The conversation will appear here.<br>Keep it kind. Keep it about the game.</p></div>
+<form id="chat-form" class="chat-form"><label for="chat-input">Your message</label><div class="chat-input-row"><input data-testid="chat-input-field" id="chat-input" type="text" maxlength="1000" autocomplete="off" placeholder="Share a matchday moment…" aria-describedby="chat-feedback"><button data-testid="chat-send-btn" class="primary" id="chat-send" type="submit">Send</button></div><p id="chat-feedback" role="status" class="feedback">Guests can watch and read without signing in.</p></form>
+<div class="cart-summary"><span><span aria-hidden="true">▣</span> Your guest cart</span><span class="cart-count" data-testid="guest-cart-count" id="cart-count" aria-live="polite" aria-label="Items in guest cart">0</span></div>
+</aside></div>
+<section id="profile-panel" class="profile-panel" hidden aria-labelledby="profile-title"><p class="eyebrow" id="profile-type">CLUB COMMUNITY</p><h2 id="profile-title"></h2><p id="profile-description" role="status">Loading public profile…</p><div id="profile-details"></div><a class="button-link secondary" href="/web/matches/match-m1/live">Back to match centre</a></section>
+<p id="page-feedback" class="page-feedback" role="status"></p>
+</main>
+<footer><span class="brand footer-brand">skorly.</span><span>More than a score. A place to belong.</span><span>Guest viewing · secure actions require sign-in</span></footer>
+<div id="auth-modal" data-testid="progressive-auth-modal" class="modal-backdrop" hidden>
+<section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title" aria-describedby="auth-description" tabindex="-1">
+<button id="auth-close" class="close-button" aria-label="Close sign-in dialog" type="button">×</button>
+<p class="eyebrow">KEEP YOUR PLACE IN THE CROWD</p><h2 id="auth-title">A little closer to the club.</h2>
+<p id="auth-description">Sign in to send a message or continue to checkout. Your staged cart and playback position are saved.</p>
+<p id="auth-cart-note" class="saved-note"></p>
+<form id="auth-form"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required><p id="auth-error" class="error" role="alert"></p><button id="auth-submit" class="primary" type="submit">Sign in and continue</button></form>
+<p class="muted">New to the club? Register with your club organizer, then sign in here.</p><button id="keep-watching" class="text-button" type="button">Keep watching as a guest</button>
+</section></div>
+</body></html>
+

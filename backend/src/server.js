@@ -1,4 +1,6 @@
 import pg from 'pg';
+import {requireDay2Salt} from './day2-signature.js';
+requireDay2Salt();
 import { createClient } from 'redis';
 import { createSigner } from './signature.js';
 import { schema, resetDatabase } from './database.js';

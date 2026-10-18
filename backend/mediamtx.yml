@@ -1,0 +1,22 @@
+logLevel: info
+api: yes
+apiAddress: :9997
+rtsp: no
+srt: no
+rtmp: yes
+rtmpAddress: :1935
+hls: yes
+hlsAddress: :8888
+webrtc: yes
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcAdditionalHosts: [localhost, host.docker.internal]
+authMethod: http
+authHTTPAddress: http://backend:8080/internal/media/auth
+# The control API is internal to Docker and used for readiness, never host-published.
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+paths:
+  all_others:

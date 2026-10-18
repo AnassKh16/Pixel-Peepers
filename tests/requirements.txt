@@ -1,0 +1,7 @@
+pytest
+pytest-xdist
+selenium
+Appium-Python-Client
+requests
+pytest-html
+allure-pytest

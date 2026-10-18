@@ -1,0 +1,6 @@
+# MediaMTX's official image is scratch-based. Add only BusyBox and its loader
+# from the already required Alpine image so the healthcheck can query the real API.
+FROM node:20-alpine AS health-tools
+FROM bluenviron/mediamtx:1.9.1
+COPY --from=health-tools /bin/busybox /bin/busybox
+COPY --from=health-tools /lib/ /lib/

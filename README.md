@@ -1,12 +1,12 @@
-# Pixel Peepers - NaSCon '26 Part I
+# Pixel Peepers - NaSCon '26 Parts I and II
 
 ## Run
 ```bash
-DAY1_SALT=<salt> docker compose up -d --build
+DAY1_SALT=<day1-salt> DAY2_SALT=<day2-salt> docker compose up -d --build
 curl http://localhost:8080/health
 ```
 
-API: `http://localhost:8080`.
+API: `http://localhost:8080`. Day 2 B1 contracts, infrastructure, and test notes: [DAY2_B1.md](DAY2_B1.md).
 Mobile app: `mobile/release/app-release.apk`.
 Server address is editable in the app's Settings screen (default http://192.168.137.1:8080; emulator 10.0.2.2:8080).
 

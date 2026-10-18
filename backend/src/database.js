@@ -2,6 +2,7 @@ import { hash } from 'bcryptjs';
 import { sports, defaultStock } from './baseline.js';
 import { validateSport } from './sports.js';
 import { seedDemo } from './demo.js';
+import { seedDay2 } from './day2-baseline.js';
 import { createSigner } from './signature.js';
 // Capture the salt only at module startup, including for separately created test apps.
 const startupSalt=process.env.DAY1_SALT;
@@ -51,6 +52,13 @@ END;
 $$;
 DROP TRIGGER IF EXISTS roster_history_immutable ON roster_history;
 CREATE TRIGGER roster_history_immutable BEFORE UPDATE OR DELETE ON roster_history FOR EACH ROW EXECUTE FUNCTION reject_roster_history_mutation();
+CREATE TABLE IF NOT EXISTS stream_keys (stream_key text PRIMARY KEY, player_id text NOT NULL REFERENCES players, label text NOT NULL, status text NOT NULL CHECK(status IN ('active','revoked')));
+CREATE UNIQUE INDEX IF NOT EXISTS stream_keys_one_active ON stream_keys(player_id) WHERE status='active';
+CREATE TABLE IF NOT EXISTS creator_streams (player_id text PRIMARY KEY REFERENCES players, stream_key text NOT NULL REFERENCES stream_keys);
+CREATE TABLE IF NOT EXISTS costream_sessions (session_id text PRIMARY KEY, data jsonb NOT NULL);
+CREATE TABLE IF NOT EXISTS qr_mappings (entity_id text PRIMARY KEY, data jsonb NOT NULL);
+CREATE TABLE IF NOT EXISTS guest_tokens (guest_token text PRIMARY KEY, data jsonb NOT NULL);
+CREATE TABLE IF NOT EXISTS user_carts (user_id text PRIMARY KEY, data jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS offline_sync (device_id text NOT NULL, action_id text NOT NULL, data jsonb NOT NULL, PRIMARY KEY(device_id, action_id));
 `;
 
@@ -63,7 +71,7 @@ export async function resetDatabase(pool, redis, body = {}, sign = demoSigner) {
     // Serialize resets across callers and application instances.
     await client.query('SELECT pg_advisory_xact_lock(5505)');
     await client.query('ALTER SEQUENCE roster_audit_seq RESTART WITH 1');
-    await client.query('TRUNCATE club_profiles, player_profiles, product_profiles, roster_requests, roster_history, offline_sync, order_outbox, orders, rosters, events, matches, users, variants, products, discounts, players, clubs, leagues, sports, tenants, app_state');
+    await client.query('TRUNCATE creator_streams, stream_keys, costream_sessions, qr_mappings, guest_tokens, user_carts, club_profiles, player_profiles, product_profiles, roster_requests, roster_history, offline_sync, order_outbox, orders, rosters, events, matches, users, variants, products, discounts, players, clubs, leagues, sports, tenants, app_state');
     for (const [id, name] of [['tenant-alpha', 'Alpha Sports'], ['tenant-beta', 'Beta Athletics']]) {
       await client.query('INSERT INTO tenants VALUES ($1,$2)', [id, name]);
     }
@@ -88,6 +96,7 @@ export async function resetDatabase(pool, redis, body = {}, sign = demoSigner) {
     }
     if(!sign)throw new Error('DAY1_SALT must be set at startup');
     await seedDemo(client,seed,sign);
+    await seedDay2(client,sign);
     await client.query('INSERT INTO app_state VALUES ($1,$2),($3,$4)', ['seed',JSON.stringify(seed),'baseline_seeded','true']);
     // Redis is dedicated to this application; clear transient state on reset.
     await redis.flushDb();

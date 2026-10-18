@@ -26,7 +26,7 @@ test('live readiness, reset defaults, overrides, validation and deterministic da
     await redis.set('temporary', 'value');
     assert.deepEqual(await (await reset()).json(), expected);
     assert.deepEqual(await snapshot(), first);
-    assert.equal((await pool.query('SELECT * FROM matches')).rowCount, 7);
+    assert.equal((await pool.query('SELECT * FROM matches')).rowCount, 8); // Day 2 adds match-m1 without replacing the seven Day 1 matches.
     assert.equal((await pool.query('SELECT * FROM matches WHERE match_id=$1',['temporary'])).rowCount,0);
     assert.equal(await redis.get('temporary'), null);
     const override = await (await reset({seed: 7, stock: {'var-jersey-001-M': 0}})).json();

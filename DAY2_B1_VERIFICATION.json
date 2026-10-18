@@ -1,0 +1,20 @@
+{
+  "verified_at_utc": "2026-10-18T06:06:14.8934602Z",
+  "all_services_startup_seconds": 40,
+  "health_with_media": 200,
+  "health_without_media": 503,
+  "health_after_media_restart": 200,
+  "grid_ready": true,
+  "grid_nodes": 3,
+  "real_grid_browser_sessions": [
+    "chrome",
+    "chrome",
+    "firefox"
+  ],
+  "run_tests": {
+    "total": 377,
+    "passed": 377,
+    "failed": 0,
+    "skipped": 0
+  }
+}

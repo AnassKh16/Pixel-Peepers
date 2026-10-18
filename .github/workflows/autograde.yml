@@ -1,0 +1,66 @@
+name: Day 2 autograde
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DAY1_SALT: ${{ secrets.DAY1_SALT }}
+  DAY2_SALT: ${{ secrets.DAY2_SALT }}
+
+jobs:
+  autograde:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Start services
+        run: docker compose up -d --build
+
+      - name: Wait for backend health
+        run: |
+          for attempt in $(seq 1 120); do
+            if [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health)" = "200" ]; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not become healthy within 120 seconds"
+          exit 1
+
+      - name: Reset audit state
+        run: curl --fail --show-error --request POST http://localhost:8080/audit/v1/reset
+
+      - name: Probe observability and QR audit endpoints
+        run: |
+          curl --fail --show-error http://localhost:8080/metrics
+          curl --fail --show-error "http://localhost:8080/audit/v1/qr/match-m1?inspect=true"
+
+      - name: Verify Selenium Grid
+        run: |
+          python -c "import json, urllib.request; value=json.load(urllib.request.urlopen('http://localhost:4444/status'))['value']; assert value['ready'] is True and len(value['nodes']) >= 3, value"
+
+      - name: Install test dependencies
+        run: python -m pip install -r tests/requirements.txt
+
+      - name: Run Selenium tests
+        run: pytest -n 3 tests/selenium/ --junitxml=tests/reports/selenium-report.xml
+
+      - name: Run Appium tests
+        run: pytest tests/appium/ --junitxml=tests/reports/appium-report.xml
+
+      - name: Run k6 load test
+        run: |
+          docker run --rm --network host \
+            -v "$PWD:/work" -w /work \
+            grafana/k6:0.54.0 \
+            run --summary-export=tests/reports/k6-summary.json tests/k6_load.js
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: day2-test-reports
+          path: tests/reports

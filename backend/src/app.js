@@ -1,3 +1,5 @@
+import {manageStreamKey, authorizeMedia, mediaReady} from './streaming.js';
+import {manageSession} from './costream.js';
 import {validateSync,syncActions} from './offline-sync.js';
 import { mobileRouter } from './mobile-api.js';
 import express from 'express';
@@ -41,6 +43,15 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   app.use('/api/v1', rateLimit(redis));
   app.use('/api/v1', mobileRouter(pool,redis,tokens,sign,json));
   app.use(json);
+  app.post('/audit/v1/stream/key', async (req,res,next) => {
+    try {const result=await manageStreamKey(pool,req.body);res.status(result.status).json(result.response);}catch(error){next(error);}
+  });
+  app.post('/audit/v1/costream/session', async (req,res,next) => {
+    try {const result=await manageSession(pool,req.body);res.status(result.status).json(result.response);}catch(error){next(error);}
+  });
+  app.post('/internal/media/auth', async (req,res,next) => {
+    try {await authorizeMedia(pool,req.body);res.sendStatus(200);}catch(error){next(error);}
+  });
   app.post('/audit/v1/rbac-matrix', async (_req, res, next) => {
     try {
       const users = (await pool.query('SELECT user_id, role, tenant_id, league_id, club_id, player_id FROM users ORDER BY user_id')).rows;
@@ -51,7 +62,7 @@ export function createApp(pool, redis, tokens = createTokenService(), sign) {
   app.get('/health', async (_req, res) => {
     try {
       const result = await pool.query("SELECT value FROM app_state WHERE key = 'baseline_seeded'");
-      await redis.ping();
+      await Promise.all([redis.ping(), mediaReady()]);
       if (result.rows[0]?.value !== true) throw new Error('Baseline not ready');
       res.json({status: 'ok'});
     } catch { res.status(503).json(errorBody('NOT_READY', 'Dependencies or baseline are not ready')); }

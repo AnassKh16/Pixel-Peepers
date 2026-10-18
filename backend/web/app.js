@@ -4,12 +4,18 @@
   const $ = (id) => document.getElementById(id);
   const read = (key, fallback) => { try { return JSON.parse(sessionStorage.getItem(key)) || fallback; } catch (_) { return fallback; } };
   const save = (key, value) => { try { sessionStorage.setItem(key, JSON.stringify(value)); } catch (_) { /* Private browsing can disable storage. */ } };
-  const initialToken = read('skorly.guest-token', 'guest_anon_tok_7721');
-  const state = { guestToken: initialToken, member: null, cart: read('skorly.guest-cart:' + initialToken, []), matchId: null, room: null, version: -1, source: null, poll: null, chatPoll: null, fetching: false, chatFetching: false, playback: null, hls: null, chatKeys: new Set(), dialogReturn: null, dialogMedia: null, closed: false };
+  const fallbackGuestToken = 'guest_anon_tok_7721';
+  const validGuestToken = (token) => typeof token === 'string' && /^guest_[^\s]+$/.test(token);
+  const storedToken = read('skorly.guest-token', null);
+  const storedExpiry = read('skorly.guest-token-expires-at', null);
+  const initialToken = validGuestToken(storedToken) && storedToken !== fallbackGuestToken && (!storedExpiry || Date.parse(storedExpiry) > Date.now()) ? storedToken : null;
+  let guestInitialization;
+  const state = { guestToken: initialToken, member: null, cart: validGuestToken(storedToken) ? read('skorly.guest-cart:' + storedToken, []) : [], matchId: null, room: null, version: -1, source: null, poll: null, chatPoll: null, fetching: false, chatFetching: false, playback: null, hls: null, chatKeys: new Set(), dialogReturn: null, dialogMedia: null, closed: false };
   if (!Array.isArray(state.cart)) state.cart = [];
   state.cart = state.cart.filter((i) => i && i.variant_id === 'var-jersey-001-L' && Number.isSafeInteger(i.quantity) && i.quantity > 0);
   const video = $('video');
   const api = async (path, options) => {
+    await ensureGuestToken();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     try {
@@ -27,7 +33,36 @@
     const count = state.member && state.member.cartCount !== undefined ? state.member.cartCount : state.cart.reduce((sum, item) => sum + item.quantity, 0);
     $('cart-count').textContent = String(count);
   }
-  function rememberCart() { save('skorly.guest-cart:' + state.guestToken, state.cart); renderCart(); }
+  function rememberCart() { if (state.guestToken) save('skorly.guest-cart:' + state.guestToken, state.cart); renderCart(); }
+  function ensureGuestToken() {
+    if (guestInitialization) return guestInitialization;
+    if (state.guestToken) return (guestInitialization = Promise.resolve(state.guestToken));
+    guestInitialization = (async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+      try {
+        // Issuance has no bearer header: a stale/merged guest must not block a new identity.
+        const response = await fetch('/api/v1/guest/token', {
+          method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: '{}', signal: controller.signal, cache: 'no-store'
+        });
+        if (!response.ok) throw new Error('Guest token issuance failed');
+        const issued = await response.json();
+        if (!validGuestToken(issued.guest_token)) throw new Error('Invalid guest token response');
+        state.guestToken = issued.guest_token;
+        save('skorly.guest-token-expires-at', issued.expires_at || null);
+      } catch (_) {
+        // Keep guest viewing available during an issuance outage.
+        state.guestToken = fallbackGuestToken;
+        save('skorly.guest-token-expires-at', null);
+      } finally { clearTimeout(timeout); }
+      save('skorly.guest-token', state.guestToken);
+      // Preserve clicks staged while issuance was pending, and migrate legacy fallback carts.
+      rememberCart();
+      return state.guestToken;
+    })();
+    return guestInitialization;
+  }
   function mediaURL(value) {
     if (!value) return null;
     try { const url = new URL(value, location.origin); return /^(https?:)$/.test(url.protocol) ? url.href : null; } catch (_) { return null; }
@@ -60,14 +95,32 @@
       $('chat-list').scrollTop = $('chat-list').scrollHeight;
     });
   }
+  const clubNames = new Map();
+  function renderClubName(team, targetId) {
+    if (!team || (!team.team_id && !team.name)) return;
+    const target = $(targetId), id = team.team_id;
+    target.dataset.clubId = id || '';
+    if (!id) { target.textContent = team.name; return; }
+    if (!clubNames.has(id)) {
+      const entry = { name: team.name || id, pending: null };
+      // Cache the pending request as well as its result, including failed lookups.
+      entry.pending = api('/api/v1/clubs/' + encodeURIComponent(id))
+        .then((club) => typeof club.name === 'string' && club.name.trim() ? club.name : id)
+        .catch(() => id)
+        .then((name) => { entry.name = name; return name; });
+      clubNames.set(id, entry);
+    }
+    const entry = clubNames.get(id);
+    target.textContent = entry.name;
+    entry.pending.then((name) => {
+      // An older lookup must not rename a team changed by a newer score snapshot.
+      if (!state.closed && target.dataset.clubId === id) target.textContent = name;
+    });
+  }
   function applySnapshot(payload) {
     if (!payload || typeof payload !== 'object') return;
     const data = payload.data || payload.match || payload;
-    if (data.guest_token && typeof data.guest_token === 'string' && data.guest_token.startsWith('guest_')) {
-      if (data.guest_token !== state.guestToken) {
-        state.guestToken = data.guest_token; save('skorly.guest-token', state.guestToken); rememberCart();
-      }
-    }
+    // Guest identity comes only from issuance/session storage, never from score snapshots.
     const score = data.score && typeof data.score === 'object' ? data.score : data;
     const numeric = (side) => typeof side === 'number' ? side : side && side.score;
     const home = numeric(score.home), away = numeric(score.away);
@@ -76,8 +129,8 @@
       $('score').textContent = String(home) + ' - ' + String(away);
       if (Number.isFinite(version)) state.version = version;
     } else if (typeof data.score === 'string' && /^\d+\s*-\s*\d+$/.test(data.score)) { $('score').textContent = data.score; }
-    if (data.home && (data.home.name || data.home.team_id)) $('home-name').textContent = data.home.name || data.home.team_id;
-    if (data.away && (data.away.name || data.away.team_id)) $('away-name').textContent = data.away.name || data.away.team_id;
+    renderClubName(data.home, 'home-name');
+    renderClubName(data.away, 'away-name');
     if (data.title || data.name) $('page-title').textContent = data.title || data.name;
     setPlayback(data.composite_playback_url || data.playback_url || data.hls_url || (data.stream && (data.stream.playback_url || data.stream.hls_url)));
     if (data.chat_room_id) state.room = data.chat_room_id;
@@ -180,6 +233,8 @@
         const merged = await api('/audit/v1/guest/cart-merge', { method: 'POST', authToken: login.token, body: JSON.stringify({ guest_token: state.guestToken, registered_user_id: userId, guest_cart: state.cart, test_write_block: true }) });
         if (!merged.cart_merged || !merged.active_cart) throw new Error('The server has not confirmed the cart merge. Your staged cart is kept.');
         member.cartCount = merged.active_cart.total_items; state.cart = []; rememberCart();
+        // A merged guest token is invalidated by the backend; the next page must issue a new one.
+        save('skorly.guest-token', null); save('skorly.guest-token-expires-at', null);
       }
       state.member = member; renderCart(); $('password').value = ''; closeAuth();
       $('chat-feedback').textContent = 'Signed in. You can now submit your message.'; $('cart-note').textContent = 'Your cart is saved to your member account.';
@@ -238,6 +293,5 @@
   function dispose() { state.closed = true; if (state.source) state.source.close(); clearInterval(state.poll); clearInterval(state.chatPoll); if (state.hls) state.hls.destroy(); }
   window.addEventListener('pagehide', dispose);
   window.addEventListener('pageshow', (event) => { if (event.persisted) location.reload(); });
-  renderCart(); route().catch((error) => { $('page-feedback').textContent = error.message; });
+  renderCart(); ensureGuestToken().then(route).catch((error) => { $('page-feedback').textContent = error.message; });
 })();
-

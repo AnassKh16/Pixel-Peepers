@@ -1,5 +1,6 @@
 import {WebSocketServer,WebSocket} from 'ws';
 import {publicActor,publicMatch} from './public-data.js';
+import {isTokenRevoked} from './privacy.js';
 import {validId,DomainError} from './validation.js';
 
 const envelope=score=>({type:'score',...score,data:score});
@@ -13,6 +14,7 @@ export class ScoreStreams {
       const client=await this.pool.connect();
       try{
         client.on('notification',message=>{
+          if(message.channel==='nascon_privacy'){this.revokeInvalidTokens().catch(error=>console.error('Socket revocation:',error.message));return;}
           if(message.channel!=='nascon_scores')return;
           let update;try{update=JSON.parse(message.payload);}catch{return;}
           if(update.reset){
@@ -25,10 +27,20 @@ export class ScoreStreams {
           if(this.client===client){this.client=null;client.release(true);}
           if(!this.closed&&this.listeners.size){const timer=setTimeout(()=>this.start().catch(()=>{}),100);timer.unref();}
         });
-        await client.query('LISTEN nascon_scores');this.client=client;
+        await client.query('LISTEN nascon_scores');await client.query('LISTEN nascon_privacy');this.client=client;
       }catch(error){client.release(true);throw error;}
     })();
     try{await this.starting;}finally{this.starting=null;}
+  }
+  async revokeInvalidTokens(){
+    const connections=[...(this.wss?.clients??[]),...this.responses];
+    await Promise.all(connections.filter(connection=>connection.authorization).map(async connection=>{
+      if(await isTokenRevoked(connection.authorization,this.pool)){
+        connection.subscription?.close();
+        if(typeof connection.readyState==='number')connection.close(1008,'Credential invalidated by privacy erasure');
+        else connection.end();
+      }
+    }));
   }
   emit(score){for(const sink of this.listeners.get(score.match_id)??[])sink.send(score);}
   async subscribe(id,send){
@@ -53,6 +65,7 @@ export class ScoreStreams {
     });
     if(res.destroyed){subscription.close();return;}
     res.flushHeaders();
+    res.authorization=req.headers.authorization;res.subscription=subscription;
     this.responses.add(res);
     req.on('close',close);res.on('close',()=>{this.responses.delete(res);close();});
     heartbeat=setInterval(()=>res.write(': keep-alive\n\n'),15000);heartbeat.unref();
@@ -69,11 +82,15 @@ export class ScoreStreams {
         await publicMatch(this.pool,id,actor);await this.start();
         wss.handleUpgrade(req,socket,head,async ws=>{
           let subscription;
+          ws.authorization=req.headers.authorization;
           ws.on('error',()=>{});ws.on('close',()=>subscription?.close());
           try{
             subscription=await this.subscribe(id,message=>{if(ws.readyState===WebSocket.OPEN){if(ws.bufferedAmount>1024*1024)ws.close(1008,'Slow subscriber');else ws.send(JSON.stringify(message));}});
+            ws.subscription=subscription;
             if(ws.readyState!==WebSocket.OPEN){subscription.close();return;}
-            subscription.send(await publicMatch(this.pool,id,actor));
+            const score=await publicMatch(this.pool,id,actor);
+            if(await isTokenRevoked(ws.authorization,this.pool)){subscription.close();ws.close(1008,'Credential invalidated by privacy erasure');return;}
+            subscription.send(score);
           }catch{subscription?.close();ws.close(1011,'Score subscription unavailable');}
         });
       }catch(error){
@@ -92,6 +109,6 @@ export class ScoreStreams {
     this.listeners.clear();
     if(this.starting)await this.starting.catch(()=>{});
     const client=this.client;this.client=null;
-    if(client){try{await client.query('UNLISTEN nascon_scores');}finally{client.release();}}
+    if(client){try{await client.query('UNLISTEN nascon_scores');await client.query('UNLISTEN nascon_privacy');}finally{client.release();}}
   }
 }

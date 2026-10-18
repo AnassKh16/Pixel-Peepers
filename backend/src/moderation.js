@@ -12,6 +12,13 @@ alternatives.push('s' + separator + '!' + separator + 'c' + separator + '[a@]' +
 const profanity = new RegExp('(?<![\\p{L}\\p{N}])(?:' + alternatives.join('|') + ')(?![\\p{L}\\p{N}])', 'giu');
 const flood = /([\s\S])\1{3}|!{3}|\?{3}/iu;
 
+/** One pure filter for the audit endpoint and live chat; original punctuation is retained. */
+export function filterChatMessage(text) {
+  if (flood.test(text)) return {text:null,flagged:false,reason:'flood_character_repeat',dropped:true};
+  let flagged = false;
+  const filtered = text.replace(profanity, () => { flagged = true; return '***'; });
+  return {text:filtered,flagged,reason:flagged ? 'profanity_leetspeak' : null,dropped:false};
+}
 export function validateMessages(messages) {
   if (!Array.isArray(messages)) validationError(['incoming_messages']);
   const fields = [];
@@ -31,11 +38,10 @@ export function moderate(messages) {
   validateMessages(messages);
   const filtered_messages = [], kicked = new Set(), muted = new Set();
   for (const message of messages) {
-    if (flood.test(message.text)) { muted.add(message.sender); continue; }
-    let flagged = false;
-    const text = message.text.replace(profanity, () => { flagged = true; return '***'; });
+    const {text,flagged,reason,dropped} = filterChatMessage(message.text);
+    if (dropped) { muted.add(message.sender); continue; }
     if (flagged) kicked.add(message.sender);
-    filtered_messages.push({...message, text, flagged, reason: flagged ? 'profanity_leetspeak' : null});
+    filtered_messages.push({...message, text, flagged, reason});
   }
   return {filtered_messages, kicked_users: [...kicked], muted_users: [...muted]};
 }

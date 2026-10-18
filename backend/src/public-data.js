@@ -1,4 +1,4 @@
-import {redactRecord} from './privacy.js';
+import {redactRecord,isTokenRevoked} from './privacy.js';
 import {getScore} from './scoring.js';
 import {scoreView} from './score-view.js';
 import {permits} from './policy.js';
@@ -6,7 +6,9 @@ import {guestToken} from './guest-boundary.js';
 import {DomainError,validId} from './validation.js';
 
 export async function publicActor(pool,tokens,authorization) {
-  if(!authorization||guestToken(authorization))return null;
+  if(!authorization)return null;
+  if(await isTokenRevoked(authorization,pool))throw new DomainError(401,'UNAUTHENTICATED','Credential invalidated by privacy erasure');
+  if(guestToken(authorization))return null;
   const claims=tokens.verify(authorization);
   if(!claims)throw new DomainError(401,'UNAUTHENTICATED','Valid bearer token required');
   const user=(await pool.query('SELECT user_id,role,tenant_id,league_id,club_id,player_id FROM users WHERE user_id=$1',[claims.sub])).rows[0];

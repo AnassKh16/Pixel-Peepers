@@ -173,6 +173,8 @@ export async function anonymize(pool, user_id) {
         OR data->>'sub'=ANY($1::text[]) OR data->>'owner_id'=ANY($1::text[])
     `, [ids]);
     await client.query('DELETE FROM user_carts WHERE user_id=ANY($1::text[])', [ids]);
+    // PostgreSQL delivers NOTIFY only after this transaction commits, across all workers.
+    await client.query("SELECT pg_notify('nascon_privacy', '')");
     return {user_id, status:'anonymized', pii_retained:false, tokens_wiped:true};
   });
 }
